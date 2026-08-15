@@ -186,42 +186,7 @@ export function VocabularyStudyPage({ source = "topic" }: { source?: "topic" | "
               aria-label={`${flipped ? "Translation" : pack.name} side for ${target}. Tap to flip.`}
               onClick={() => setFlipped((current) => !current)}
             >
-              {reduceMotion ? (
-                <div className="study-card__rotor study-card__rotor--reduced">
-                  <AnimatePresence initial={false} mode="wait">
-                    <motion.div
-                      className="study-card__reduced-face"
-                      key={flipped ? "back" : "front"}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.12 }}
-                    >
-                      {flipped ? back : front}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <div className="study-card__rotor">
-                  <AnimatePresence initial={false}>
-                    <motion.div
-                      className="study-card__fold-face"
-                      key={flipped ? "back" : "front"}
-                      variants={{
-                        enter: { rotateY: flipped ? 78 : -78, opacity: 0 },
-                        center: { rotateY: 0, opacity: 1 },
-                        exit: { rotateY: flipped ? -78 : 78, opacity: 0 }
-                      }}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
-                      transition={{ duration: 0.16, ease: [0.77, 0, 0.175, 1] }}
-                    >
-                      {flipped ? back : front}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-              )}
+              <div className="study-card__content">{flipped ? back : front}</div>
             </button>
           </motion.div>
         </AnimatePresence>

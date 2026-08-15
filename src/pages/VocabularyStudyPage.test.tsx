@@ -57,6 +57,17 @@ describe("immersive vocabulary study", () => {
     await waitFor(() => expect(screen.getByLabelText("Card 3 of 36")).toBeInTheDocument());
   });
 
+  it("swaps one face in place without overlapping front and back content", () => {
+    renderStudy();
+    const card = screen.getByRole("button", { name: /Japanese side for 軍用機/ });
+
+    expect(card.querySelectorAll(".study-card__face")).toHaveLength(1);
+    expect(card.querySelector(".study-card__face--front")).toBeInTheDocument();
+    fireEvent.click(card);
+    expect(card.querySelectorAll(".study-card__face")).toHaveLength(1);
+    expect(card.querySelector(".study-card__face--front")).not.toBeInTheDocument();
+  });
+
   it("opens the complete essential phrase kit in the same immersive learner", async () => {
     renderPhraseStudy();
 
