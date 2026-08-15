@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Language Learner</title>
+  <rect width="512" height="512" rx="112" fill="#f8f4ef"/>
+  <path d="M116 124c0-22 18-40 40-40h200c22 0 40 18 40 40v190c0 22-18 40-40 40H250l-82 73 18-73h-30c-22 0-40-18-40-40V124Z" fill="#ee745e"/>
+  <circle cx="353" cy="134" r="22" fill="#23211f"/>
+  <text x="256" y="278" text-anchor="middle" fill="#23211f" font-family="-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif" font-size="150" font-weight="700">あ</text>
+</svg>

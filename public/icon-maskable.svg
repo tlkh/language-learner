@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Language Learner maskable icon</title>
+  <rect width="512" height="512" fill="#ee745e"/>
+  <path d="M126 139c0-19 15-34 34-34h192c19 0 34 15 34 34v174c0 19-15 34-34 34H252l-64 58 14-58h-42c-19 0-34-15-34-34V139Z" fill="#f8f4ef"/>
+  <circle cx="345" cy="151" r="17" fill="#23211f"/>
+  <text x="256" y="284" text-anchor="middle" fill="#23211f" font-family="-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif" font-size="136" font-weight="700">あ</text>
+</svg>

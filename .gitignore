@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dev-dist/
+coverage/
+output/
+.playwright-cli/
+*.tsbuildinfo
+.DS_Store
