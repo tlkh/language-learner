@@ -1,13 +1,109 @@
 import { describe, expect, it } from "vitest";
 import { japanesePack } from "../languages/ja/japanese";
 import { hasJapaneseDefinitionContext } from "../languages/ja/definitions";
+import { vietnamesePack } from "../languages/vi/vietnamese";
+import { thaiPack } from "../languages/th/thai";
+import { indonesianPack } from "../languages/id/indonesian";
 import { languageCatalog, loadLanguagePack } from "../languages/registry";
 
 describe("language registry", () => {
-  it("registers only shipped packs and loads Japanese lazily", async () => {
-    expect(languageCatalog.map((entry) => entry.code)).toEqual(["ja"]);
+  it("registers shipped packs and loads them lazily", async () => {
+    expect(languageCatalog.map((entry) => entry.code)).toEqual(["ja", "vi", "th", "id"]);
     expect(await loadLanguagePack("ja")).toBe(japanesePack);
-    await expect(loadLanguagePack("vi")).rejects.toThrow("Unknown language pack");
+    expect(await loadLanguagePack("vi")).toBe(vietnamesePack);
+    expect(await loadLanguagePack("th")).toBe(thaiPack);
+    expect(await loadLanguagePack("id")).toBe(indonesianPack);
+  });
+});
+
+describe("Vietnamese language pack", () => {
+  it("ships a complete practical curriculum and one standard speech variant", () => {
+    expect(vietnamesePack.topics).toHaveLength(16);
+    expect(vietnamesePack.collections).toHaveLength(5);
+    expect(vietnamesePack.topics.flatMap((topic) => topic.scenes)).toHaveLength(48);
+    expect(vietnamesePack.speechVariants).toHaveLength(1);
+    expect(vietnamesePack.sharedVocabularySets[0].vocabulary).toHaveLength(40);
+    expect(vietnamesePack.characterCourse.items).toHaveLength(34);
+    for (const topic of vietnamesePack.topics) {
+      expect(topic.vocabulary.filter((entry) => entry.tags.includes("domain")).length).toBe(24);
+      expect(topic.dialogues).toHaveLength(3);
+      expect(topic.scenes).toHaveLength(3);
+      expect(topic.quizTierIds).toEqual(vietnamesePack.quiz.tiers.map((tier) => tier.id));
+      for (const tier of vietnamesePack.quiz.tiers) {
+        const questions = vietnamesePack.quiz.generate(topic, { languageCode: "vi", topicId: topic.id, tierId: tier.id, variantId: "standard", seed: 42, count: tier.sessionSize });
+        expect(questions).toHaveLength(24);
+        expect(new Set(questions.map((item) => item.id)).size).toBe(24);
+      }
+    }
+  });
+
+  it("preserves Vietnamese tone marks during grading", () => {
+    const topic = vietnamesePack.topics.find((item) => item.id === "greetings-small-talk")!;
+    const question = vietnamesePack.quiz.generate(topic, { languageCode: "vi", topicId: topic.id, tierId: "word-recall", variantId: "standard", seed: 1, count: 24 })
+      .find((item) => item.canonicalAnswer === "tên")!;
+    expect(vietnamesePack.quiz.grade(question, "tên").status).toBe("correct");
+    expect(vietnamesePack.quiz.grade(question, "ten").status).not.toBe("correct");
+  });
+});
+
+describe("Thai language pack", () => {
+  it("ships a complete practical curriculum and Thai writing course", () => {
+    expect(thaiPack.topics).toHaveLength(16);
+    expect(thaiPack.collections).toHaveLength(5);
+    expect(thaiPack.topics.flatMap((topic) => topic.scenes)).toHaveLength(48);
+    expect(thaiPack.speechVariants).toHaveLength(1);
+    expect(thaiPack.sharedVocabularySets[0].vocabulary).toHaveLength(40);
+    expect(thaiPack.characterCourse.items).toHaveLength(81);
+    expect(thaiPack.characterCourse.collections.map((collection) => collection.title)).toEqual(["Thai consonants", "Thai vowels", "Tone marks"]);
+    for (const topic of thaiPack.topics) {
+      expect(topic.vocabulary.filter((entry) => entry.tags.includes("domain")).length).toBe(24);
+      expect(topic.dialogues).toHaveLength(3);
+      expect(topic.scenes).toHaveLength(3);
+      expect(topic.quizTierIds).toEqual(thaiPack.quiz.tiers.map((tier) => tier.id));
+      for (const tier of thaiPack.quiz.tiers) {
+        const questions = thaiPack.quiz.generate(topic, { languageCode: "th", topicId: topic.id, tierId: tier.id, variantId: "standard", seed: 42, count: tier.sessionSize });
+        expect(questions).toHaveLength(24);
+        expect(new Set(questions.map((item) => item.id)).size).toBe(24);
+      }
+    }
+  });
+
+  it("preserves Thai tone marks during grading", () => {
+    const topic = thaiPack.topics.find((item) => item.id === "greetings-small-talk")!;
+    const question = thaiPack.quiz.generate(topic, { languageCode: "th", topicId: topic.id, tierId: "word-recall", variantId: "standard", seed: 1, count: 24 })
+      .find((item) => item.canonicalAnswer === "ร้อน")!;
+    expect(thaiPack.quiz.grade(question, "ร้อน").status).toBe("correct");
+    expect(thaiPack.quiz.grade(question, "รอน").status).not.toBe("correct");
+  });
+});
+
+describe("Indonesian language pack", () => {
+  it("ships a complete practical curriculum and alphabet course", () => {
+    expect(indonesianPack.topics).toHaveLength(16);
+    expect(indonesianPack.collections).toHaveLength(5);
+    expect(indonesianPack.topics.flatMap((topic) => topic.scenes)).toHaveLength(48);
+    expect(indonesianPack.speechVariants).toHaveLength(1);
+    expect(indonesianPack.sharedVocabularySets[0].vocabulary).toHaveLength(40);
+    expect(indonesianPack.characterCourse.items).toHaveLength(30);
+    expect(indonesianPack.characterCourse.collections.map((collection) => collection.title)).toEqual(["Indonesian alphabet", "Common digraphs"]);
+    for (const topic of indonesianPack.topics) {
+      expect(topic.vocabulary.filter((entry) => entry.tags.includes("domain")).length).toBe(24);
+      expect(topic.dialogues).toHaveLength(3);
+      expect(topic.scenes).toHaveLength(3);
+      expect(topic.quizTierIds).toEqual(indonesianPack.quiz.tiers.map((tier) => tier.id));
+      for (const tier of indonesianPack.quiz.tiers) {
+        const questions = indonesianPack.quiz.generate(topic, { languageCode: "id", topicId: topic.id, tierId: tier.id, variantId: "standard", seed: 42, count: tier.sessionSize });
+        expect(questions).toHaveLength(24);
+        expect(new Set(questions.map((item) => item.id)).size).toBe(24);
+      }
+    }
+  });
+
+  it("normalizes Indonesian case without changing the answer", () => {
+    const topic = indonesianPack.topics.find((item) => item.id === "greetings-small-talk")!;
+    const question = indonesianPack.quiz.generate(topic, { languageCode: "id", topicId: topic.id, tierId: "word-recall", variantId: "standard", seed: 1, count: 24 })
+      .find((item) => item.canonicalAnswer === "nama")!;
+    expect(indonesianPack.quiz.grade(question, "NAMA").status).toBe("correct");
   });
 });
 

@@ -2,7 +2,7 @@
 
 Language packs are first-party TypeScript modules compiled with the application. They are modular and lazily loaded, but they are not runtime JSON, downloaded extensions, or external plugins. A pack owns its language-specific content, presentation, normalization, speech variants, quiz rules, and character course. The shared application owns routing, deterministic selection, storage, and reusable UI.
 
-Only Japanese is currently registered. Do not add an entry to the selector until its pack is complete and validated.
+Japanese, Vietnamese, Thai, and Indonesian are currently registered. Do not add an entry to the selector until its pack is complete and validated.
 
 ## Folder layout
 

@@ -8,6 +8,30 @@ export const languageCatalog: LanguageCatalogEntry[] = [
     locale: "ja",
     mark: "あ",
     load: async () => (await import("./ja/japanese")).japanesePack
+  },
+  {
+    code: "vi",
+    name: "Vietnamese",
+    nativeName: "Tiếng Việt",
+    locale: "vi",
+    mark: "đ",
+    load: async () => (await import("./vi/vietnamese")).vietnamesePack
+  },
+  {
+    code: "th",
+    name: "Thai",
+    nativeName: "ไทย",
+    locale: "th",
+    mark: "ก",
+    load: async () => (await import("./th/thai")).thaiPack
+  },
+  {
+    code: "id",
+    name: "Indonesian",
+    nativeName: "Bahasa Indonesia",
+    locale: "id",
+    mark: "A",
+    load: async () => (await import("./id/indonesian")).indonesianPack
   }
 ];
 
