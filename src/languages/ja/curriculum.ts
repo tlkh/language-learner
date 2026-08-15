@@ -1,4 +1,4 @@
-import type { LearningCollection } from "./types";
+import type { LearningCollection } from "../types";
 
 export const ESSENTIAL_PHRASE_SET_ID = "essential-phrase-kit";
 
@@ -20,33 +20,36 @@ export const collections: LearningCollection[] = [
     title: "Start & Connect",
     description: "The phrases, numbers, and social language that make every later interaction easier.",
     phraseSetIds: [ESSENTIAL_PHRASE_SET_ID],
-    topicIds: ["greetings-small-talk", "numbers-dates-time"]
+    topicIds: ["greetings-small-talk", "numbers-dates-time"],
+    presentation: "path"
   },
   {
     id: "arrive-get-around",
     title: "Arrive & Get Around",
     description: "Land, orient yourself, and move confidently by train or bus.",
-    topicIds: ["airports-flights", "directions-navigation", "trains-stations", "buses-terminals"]
+    topicIds: ["airports-flights", "directions-navigation", "trains-stations", "buses-terminals"],
+    presentation: "path"
   },
   {
     id: "stay-daily-needs",
     title: "Stay & Daily Needs",
     description: "Handle accommodation, meals, shopping, laundry, and everyday errands.",
-    topicIds: ["hotels", "restaurants-food", "shopping-payments", "cleaning-laundry-hygiene"]
+    topicIds: ["hotels", "restaurants-food", "shopping-payments", "cleaning-laundry-hygiene"],
+    presentation: "path"
   },
   {
     id: "safety-conditions",
     title: "Safety & Conditions",
     description: "Keep urgent food, weather, medical, police, and disaster language close at hand.",
     topicIds: ["food-allergies", "weather", "emergencies-help"],
-    pinned: true
+    presentation: "featured"
   },
   {
     id: "explore-interests",
     title: "Explore & Interests",
     description: "Optional specialist language for photography, aircraft recognition, and public aviation events.",
     topicIds: ["photography-cameras", "aircraft-jsdf", "air-bases-shows-jsdf"],
-    optional: true
+    presentation: "optional"
   }
 ];
 

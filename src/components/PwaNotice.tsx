@@ -1,4 +1,4 @@
-import { Download, RefreshCw, WifiOff, X } from "lucide-react";
+import { RefreshCw, WifiOff, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { usePwaState } from "../pwa/PwaState";
 
@@ -42,11 +42,11 @@ export function PwaNotice() {
 export function OfflineBadge() {
   const { offlineReady, online } = usePwaState();
   const label = offlineReady ? (online ? "Ready offline" : "Working offline") : "Caching app";
-  const [shortLabel, detail] = label.split(" ", 2);
+  const visibleLabel = offlineReady ? "Offline" : "Caching";
   return (
-    <span className={`offline-badge${offlineReady ? " is-ready" : ""}`} aria-label={label}>
-      {offlineReady ? <Download aria-hidden="true" /> : <WifiOff aria-hidden="true" />}
-      <span aria-hidden="true">{shortLabel}<span className="offline-badge__detail"> {detail}</span></span>
+    <span className={`offline-badge${offlineReady ? " is-ready" : ""}`} aria-label={label} title={label}>
+      <span className="offline-badge__dot" aria-hidden="true" />
+      <span aria-hidden="true">{visibleLabel}</span>
     </span>
   );
 }

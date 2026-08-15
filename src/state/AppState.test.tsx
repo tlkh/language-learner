@@ -1,6 +1,8 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { RegisterSwitch } from "../components/RegisterSwitch";
+import { LanguagePackProvider } from "../languages/LanguagePackContext";
+import { japanesePack } from "../languages/ja/japanese";
 import { db } from "../storage/db";
 import { AppStateProvider } from "./AppState";
 
@@ -46,25 +48,27 @@ describe("system appearance", () => {
 });
 
 describe("global register preference", () => {
+  const renderSwitch = (compact = false) => render(<AppStateProvider><LanguagePackProvider pack={japanesePack}><RegisterSwitch compact={compact} /></LanguagePackProvider></AppStateProvider>);
+
   it("uses compact Japanese labels without changing the accessible names", () => {
-    render(<AppStateProvider><RegisterSwitch compact /></AppStateProvider>);
+    renderSwitch(true);
     expect(screen.getByRole("button", { name: /formal/i })).toHaveTextContent("丁寧");
     expect(screen.getByRole("button", { name: /casual/i })).toHaveTextContent("普通");
     expect(screen.queryByText("カジュアル")).not.toBeInTheDocument();
   });
 
   it("persists an informal selection locally and in IndexedDB", async () => {
-    render(<AppStateProvider><RegisterSwitch /></AppStateProvider>);
+    renderSwitch();
     const casual = screen.getByRole("button", { name: /casual/i });
     fireEvent.click(casual);
     expect(casual).toHaveAttribute("aria-pressed", "true");
-    expect(localStorage.getItem("ll-register")).toBe("informal");
-    await waitFor(async () => expect((await db.preferences.get("register"))?.value).toBe("informal"));
+    expect(JSON.parse(localStorage.getItem("ll-speech-variants") ?? "{}")).toEqual({ ja: "informal" });
+    await waitFor(async () => expect((await db.preferences.get("language:ja:speechVariant"))?.value).toBe("informal"));
   });
 
   it("restores the register on a new provider launch", () => {
     localStorage.setItem("ll-register", "informal");
-    render(<AppStateProvider><RegisterSwitch /></AppStateProvider>);
+    renderSwitch();
     expect(screen.getByRole("button", { name: /casual/i })).toHaveAttribute("aria-pressed", "true");
   });
 });

@@ -2,13 +2,27 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { AppStateProvider } from "../state/AppState";
+import { LanguagePackProvider } from "../languages/LanguagePackContext";
+import { japanesePack } from "../languages/ja/japanese";
 import { projectedSwipeOffset, VocabularyStudyPage } from "./VocabularyStudyPage";
 
 const renderStudy = () => render(
   <AppStateProvider>
-    <MemoryRouter initialEntries={["/topic/aircraft-jsdf/study?scene=types-roles"]}>
-      <Routes><Route path="/topic/:topicId/study" element={<VocabularyStudyPage />} /></Routes>
-    </MemoryRouter>
+    <LanguagePackProvider pack={japanesePack}>
+      <MemoryRouter initialEntries={["/ja/topic/aircraft-jsdf/study?scene=types-roles"]}>
+        <Routes><Route path="/ja/topic/:topicId/study" element={<VocabularyStudyPage />} /></Routes>
+      </MemoryRouter>
+    </LanguagePackProvider>
+  </AppStateProvider>
+);
+
+const renderPhraseStudy = () => render(
+  <AppStateProvider>
+    <LanguagePackProvider pack={japanesePack}>
+      <MemoryRouter initialEntries={["/ja/phrases/study"]}>
+        <Routes><Route path="/ja/phrases/study" element={<VocabularyStudyPage source="phrases" />} /></Routes>
+      </MemoryRouter>
+    </LanguagePackProvider>
   </AppStateProvider>
 );
 
@@ -41,6 +55,17 @@ describe("immersive vocabulary study", () => {
 
     fireEvent.keyDown(window, { key: "ArrowRight" });
     await waitFor(() => expect(screen.getByLabelText("Card 3 of 36")).toBeInTheDocument());
+  });
+
+  it("opens the complete essential phrase kit in the same immersive learner", async () => {
+    renderPhraseStudy();
+
+    expect(screen.getByRole("heading", { name: "Essential Phrase Kit" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Card 1 of 40")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Close vocabulary study" })).toHaveAttribute("href", "/ja/phrases");
+
+    fireEvent.click(screen.getByRole("button", { name: /Japanese side for お願いします/ }));
+    await waitFor(() => expect(screen.getByText("please")).toBeInTheDocument());
   });
 
   it("projects flick velocity into the swipe decision", () => {

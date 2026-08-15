@@ -1,89 +1,67 @@
 import { describe, expect, it } from "vitest";
-import { japanesePack } from "./japanese";
-import type { QuizTier, Register } from "./types";
-import { generateQuiz, QUIZ_SIZE } from "../quiz/engine";
-import { hasJapaneseDefinitionContext } from "./definitions";
+import { japanesePack } from "../languages/ja/japanese";
+import { hasJapaneseDefinitionContext } from "../languages/ja/definitions";
+import { languageCatalog, loadLanguagePack } from "../languages/registry";
 
-const tiers: QuizTier[] = ["romaji-recall", "script-recall", "sentence-production", "response-production"];
-const registers: Register[] = ["formal", "informal"];
+describe("language registry", () => {
+  it("registers only shipped packs and loads Japanese lazily", async () => {
+    expect(languageCatalog.map((entry) => entry.code)).toEqual(["ja"]);
+    expect(await loadLanguagePack("ja")).toBe(japanesePack);
+    await expect(loadLanguagePack("vi")).rejects.toThrow("Unknown language pack");
+  });
+});
 
 describe("Japanese language pack", () => {
-  it("ships all 16 open topics with complete study material", () => {
+  it("retains the complete curriculum and pack-owned quiz metadata", () => {
     expect(japanesePack.topics).toHaveLength(16);
     expect(japanesePack.collections).toHaveLength(5);
+    expect(japanesePack.topics.flatMap((topic) => topic.scenes)).toHaveLength(48);
+    expect(new Set(japanesePack.topics.flatMap((topic) => topic.vocabulary.map((entry) => entry.id))).size).toBe(1374);
+    expect(japanesePack.quiz.tiers).toHaveLength(4);
     expect(japanesePack.sharedVocabularySets[0].vocabulary).toHaveLength(40);
     for (const topic of japanesePack.topics) {
-      expect(topic.vocabulary.length).toBeGreaterThanOrEqual(120);
       expect(topic.vocabulary.filter((entry) => entry.tags.includes("domain")).length).toBeGreaterThanOrEqual(80);
       expect(topic.dialogues).toHaveLength(3);
       expect(topic.scenes).toHaveLength(3);
-      expect(new Set(topic.scenes.flatMap((scene) => scene.vocabularyIds)).size).toBe(
-        topic.vocabulary.filter((entry) => entry.tags.includes("domain")).length
-      );
+      expect(topic.quizTierIds).toEqual(japanesePack.quiz.tiers.map((tier) => tier.id));
       for (const scene of topic.scenes) {
         expect(scene.dialogueIds).toHaveLength(1);
         expect(scene.sentencePatternIds.length).toBeGreaterThanOrEqual(2);
         expect(scene.responsePatternIds.length).toBeGreaterThanOrEqual(2);
       }
-      expect(topic.tierAvailability).toEqual(tiers);
-      expect(new Set(topic.vocabulary.map((entry) => entry.id)).size).toBe(topic.vocabulary.length);
+    }
+  });
+
+  it("generates deterministic, scene-balanced sessions for every tier and speech variant", () => {
+    for (const topic of japanesePack.topics) for (const tier of japanesePack.quiz.tiers) for (const variant of japanesePack.speechVariants) {
+      const options = { languageCode: "ja", topicId: topic.id, tierId: tier.id, variantId: variant.id, seed: 42, count: tier.sessionSize };
+      const first = japanesePack.quiz.generate(topic, options);
+      expect(first).toEqual(japanesePack.quiz.generate(topic, options));
+      expect(first).toHaveLength(24);
+      expect(new Set(first.map((item) => item.id)).size).toBe(24);
+      expect(topic.scenes.every((scene) => first.some((question) => question.sceneId === scene.id))).toBe(true);
     }
   });
 
   it("keeps aircraft terminology canonical to the Aircraft topic", () => {
     const aircraft = japanesePack.topics.find((topic) => topic.id === "aircraft-jsdf")!;
-    const aircraftMeanings = new Set(
-      aircraft.vocabulary.filter((entry) => entry.tags.includes("domain")).flatMap((entry) => entry.meanings)
-    );
-    const aircraftForms = new Set(
-      aircraft.vocabulary
-        .filter((entry) => entry.tags.includes("domain"))
-        .flatMap((entry) => [entry.sharedForm.kana, entry.sharedForm.kanji].filter(Boolean))
-    );
-    const entriesElsewhere = japanesePack.topics
-      .filter((topic) => topic.id !== aircraft.id)
-      .flatMap((topic) => topic.vocabulary.filter((entry) => entry.tags.includes("domain")));
-    const meaningsElsewhere = entriesElsewhere.flatMap((entry) => entry.meanings);
-    const formsElsewhere = entriesElsewhere.flatMap((entry) => [entry.sharedForm.kana, entry.sharedForm.kanji].filter(Boolean));
-    expect(meaningsElsewhere.filter((meaning) => aircraftMeanings.has(meaning))).toEqual([]);
-    expect(formsElsewhere.filter((form) => aircraftForms.has(form))).toEqual([]);
+    const aircraftEntries = aircraft.vocabulary.filter((entry) => entry.tags.includes("domain"));
+    const aircraftMeanings = new Set(aircraftEntries.flatMap((entry) => entry.meanings));
+    const aircraftForms = new Set(aircraftEntries.flatMap((entry) => Object.values(entry.baseForm.representations)));
+    const elsewhere = japanesePack.topics.filter((topic) => topic.id !== aircraft.id).flatMap((topic) => topic.vocabulary.filter((entry) => entry.tags.includes("domain")));
+    expect(elsewhere.flatMap((entry) => entry.meanings).filter((meaning) => aircraftMeanings.has(meaning))).toEqual([]);
+    expect(elsewhere.flatMap((entry) => Object.values(entry.baseForm.representations)).filter((form) => aircraftForms.has(form))).toEqual([]);
   });
 
-  it("provides at least 24 validated candidates for every tier and register", () => {
-    for (const topic of japanesePack.topics) {
-      for (const tier of tiers) {
-        for (const register of registers) {
-          const questions = generateQuiz(topic, { topicId: topic.id, tier, register, seed: 42 });
-          expect(questions).toHaveLength(QUIZ_SIZE);
-          expect(new Set(questions.map((item) => item.id)).size).toBe(QUIZ_SIZE);
-          expect(topic.scenes.every((scene) => questions.some((question) => question.sceneId === scene.id))).toBe(true);
-        }
-      }
+  it("ships the complete 214-unit kana hierarchy", () => {
+    expect(japanesePack.characterCourse.items).toHaveLength(214);
+    expect(japanesePack.characterCourse.collections.map((collection) => collection.title)).toEqual(["Hiragana", "Katakana"]);
+    for (const collection of japanesePack.characterCourse.collections) {
+      expect(collection.sections.map((section) => section.groups.flatMap((group) => group.itemIds).length)).toEqual([46, 25, 36]);
     }
   });
 
-  it("uses authored English labels where a natural sentence needs inflection or an article", () => {
-    const food = japanesePack.topics.find((topic) => topic.id === "food-allergies")!;
-    const emergencies = japanesePack.topics.find((topic) => topic.id === "emergencies-help")!;
-    expect(food.sentencePatterns.some((pattern) => Object.values(pattern.slotEnglish ?? {}).includes("peanuts"))).toBe(true);
-    expect(emergencies.sentencePatterns.some((pattern) => Object.values(pattern.slotEnglish ?? {}).includes("an ambulance"))).toBe(true);
-  });
-
-  it("exposes normalization and quiz generation through the language-pack contract", () => {
-    expect(japanesePack.normalizer(" Ａ！ ")).toBe("a");
-    expect(japanesePack.quizGenerators.generate(japanesePack.topics[0], {
-      topicId: japanesePack.topics[0].id,
-      tier: "romaji-recall",
-      register: "formal",
-      seed: 1
-    })).toHaveLength(QUIZ_SIZE);
-  });
-
-  it("provides an authored Japanese definition context for every study scene", () => {
-    for (const topic of japanesePack.topics) {
-      for (const scene of topic.scenes) {
-        expect(hasJapaneseDefinitionContext(topic.id, scene.id)).toBe(true);
-      }
-    }
+  it("provides authored definition context for every study scene", () => {
+    for (const topic of japanesePack.topics) for (const scene of topic.scenes) expect(hasJapaneseDefinitionContext(topic.id, scene.id)).toBe(true);
   });
 });

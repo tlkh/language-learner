@@ -1,28 +1,25 @@
-import { useAppState } from "../state/AppState";
+import { useLanguagePack } from "../languages/LanguagePackContext";
 
 export function RegisterSwitch({ compact = false }: { compact?: boolean }) {
-  const { register, setRegister } = useAppState();
+  const { pack, variantId, setVariantId } = useLanguagePack();
+  if (pack.speechVariants.length < 2) return null;
   return (
     <fieldset className={`register-switch${compact ? " register-switch--compact" : ""}`}>
       <legend className="sr-only">Speech style</legend>
-      <button
-        type="button"
-        aria-pressed={register === "formal"}
-        className="register-switch__option"
-        onClick={() => setRegister("formal")}
-      >
-        <span lang="ja">丁寧</span>
-        <span className={compact ? "sr-only" : undefined}>Formal</span>
-      </button>
-      <button
-        type="button"
-        aria-pressed={register === "informal"}
-        className="register-switch__option"
-        onClick={() => setRegister("informal")}
-      >
-        <span lang="ja">{compact ? "普通" : "カジュアル"}</span>
-        <span className={compact ? "sr-only" : undefined}>Casual</span>
-      </button>
+      {pack.speechVariants.map((variant) => (
+        <button
+          key={variant.id}
+          type="button"
+          aria-pressed={variantId === variant.id}
+          className="register-switch__option"
+          onClick={() => setVariantId(variant.id)}
+        >
+          {variant.nativeLabel ? (
+            <span lang={pack.locale}>{compact ? variant.compactNativeLabel ?? variant.nativeLabel : variant.nativeLabel}</span>
+          ) : null}
+          <span className={compact && variant.nativeLabel ? "sr-only" : undefined}>{variant.label}</span>
+        </button>
+      ))}
     </fieldset>
   );
 }

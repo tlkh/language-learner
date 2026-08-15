@@ -1,12 +1,12 @@
 import type {
   DialogueScenario,
   PartOfSpeech,
-  Register,
+  SpeechVariantId,
   ResponsePattern,
   SentencePattern,
   Topic,
   VocabularyEntry
-} from "./types";
+} from "../types";
 import { ESSENTIAL_PHRASE_SET_ID, priorityOverrides, topicCurriculum } from "./curriculum";
 
 type RawVocabulary = readonly [
@@ -24,7 +24,7 @@ export interface TopicSeed {
   title: string;
   shortTitle: string;
   description: string;
-  category: Topic["category"];
+  category: Topic["categoryId"];
   domain: RawVocabulary[];
   slotMeanings: Array<string | readonly [meaning: string, englishLabel: string]>;
   dialogues: DialogueScenario[];
@@ -60,10 +60,16 @@ export const makeEntry = (topicId: string, item: RawVocabulary, index: number, t
     primarySceneId: "",
     priority: "useful",
     meanings: meaning.split(" / "),
-    sharedForm: { kana, kanji: kanji || undefined, romaji },
-    aliases: {
-      script: scriptAliases ? scriptAliases.split(";") : [],
-      romaji: romajiAliases ? romajiAliases.split(";") : []
+    baseForm: {
+      representations: {
+        target: kanji || kana,
+        reading: kana,
+        romanization: romaji
+      },
+      aliases: {
+        target: scriptAliases ? scriptAliases.split(";") : [],
+        romanization: romajiAliases ? romajiAliases.split(";") : []
+      }
     },
     partOfSpeech,
     tags: [topicId, tag]
@@ -127,9 +133,16 @@ const applyRegisterForms = (entry: VocabularyEntry): VocabularyEntry => {
   if (!informal) return entry;
   return {
     ...entry,
-    registerForms: {
-      formal: entry.sharedForm,
-      informal
+    variantForms: {
+      formal: entry.baseForm,
+      informal: {
+        representations: {
+          target: informal.kanji ?? informal.kana,
+          reading: informal.kana,
+          romanization: informal.romaji
+        },
+        aliases: entry.baseForm.aliases
+      }
     }
   };
 };
@@ -142,8 +155,8 @@ export const essentialPhraseVocabulary = coreVocabulary.map((item, index) =>
   })
 );
 
-export const formFor = (entry: VocabularyEntry, register: Register) =>
-  entry.registerForms?.[register] ?? entry.sharedForm;
+export const formFor = (entry: VocabularyEntry, variantId: SpeechVariantId) =>
+  entry.variantForms?.[variantId] ?? entry.baseForm;
 
 const fill = (template: string, english: string, japanese: string) =>
   template.replaceAll("{term}", japanese).replaceAll("{meaning}", english);
@@ -168,10 +181,10 @@ export const buildTopic = (seed: TopicSeed): Topic => {
       priority: priorityOverrides[entry.meanings[0]] ?? (localIndex < 10 ? "must-know" : localIndex < 20 ? "useful" : "reference")
     };
   });
-  const domainForms = new Set(domain.map((entry) => entry.sharedForm.kanji ?? entry.sharedForm.kana));
+  const domainForms = new Set(domain.map((entry) => entry.baseForm.representations.target));
   const domainMeanings = new Set(domain.flatMap((entry) => entry.meanings.map((meaning) => meaning.toLocaleLowerCase("en"))));
   const core = essentialPhraseVocabulary
-    .filter((entry) => !domainMeanings.has(entry.meanings[0].toLocaleLowerCase("en")) && !domainForms.has(entry.sharedForm.kanji ?? entry.sharedForm.kana));
+    .filter((entry) => !domainMeanings.has(entry.meanings[0].toLocaleLowerCase("en")) && !domainForms.has(entry.baseForm.representations.target));
   const vocabulary = [...domain, ...core];
   const entriesByMeaning = new Map(domain.map((entry) => [entry.meanings[0], entry]));
   const slotSpecs = seed.slotMeanings.map((slot) =>
@@ -190,16 +203,16 @@ export const buildTopic = (seed: TopicSeed): Topic => {
     const generated = sceneSlots.length ? [{
       id: `${seed.id}-${scene.id}-sentence-slots`,
       sceneId: scene.id,
-      english: seed.sentence.english,
-      japanese: { formal: seed.sentence.formal, informal: seed.sentence.informal },
+      sourceText: seed.sentence.english,
+      targetTextByVariant: { formal: seed.sentence.formal, informal: seed.sentence.informal },
       slotEntryIds: sceneSlots.map((entry) => entry.id),
-      slotEnglish: Object.fromEntries(sceneSlots.map((entry) => [entry.id, englishByEntry[entry.id]]))
+      slotSourceText: Object.fromEntries(sceneSlots.map((entry) => [entry.id, englishByEntry[entry.id]]))
     }] : [];
     const dialoguePatterns = seed.dialogues[sceneIndex].turns.map((turn, turnIndex) => ({
       id: `${seed.id}-${scene.id}-dialogue-sentence-${turnIndex + 1}`,
       sceneId: scene.id,
-      english: turn.english,
-      japanese: turn.japanese,
+      sourceText: turn.sourceText,
+      targetTextByVariant: turn.targetTextByVariant,
       slotEntryIds: []
     }));
     return [...generated, ...dialoguePatterns];
@@ -209,16 +222,16 @@ export const buildTopic = (seed: TopicSeed): Topic => {
     const generated = sceneSlots.length ? [{
       id: `${seed.id}-${scene.id}-response-slots`,
       sceneId: scene.id,
-      promptJapanese: { formal: seed.response.promptFormal, informal: seed.response.promptInformal },
-      answerJapanese: { formal: seed.response.answerFormal, informal: seed.response.answerInformal },
+      promptTargetTextByVariant: { formal: seed.response.promptFormal, informal: seed.response.promptInformal },
+      answerTargetTextByVariant: { formal: seed.response.answerFormal, informal: seed.response.answerInformal },
       slotEntryIds: sceneSlots.map((entry) => entry.id)
     }] : [];
     const turns = seed.dialogues[sceneIndex].turns;
     const dialoguePatterns = turns.slice(0, -1).map((turn, turnIndex) => ({
       id: `${seed.id}-${scene.id}-dialogue-response-${turnIndex + 1}`,
       sceneId: scene.id,
-      promptJapanese: turn.japanese,
-      answerJapanese: turns[turnIndex + 1].japanese,
+      promptTargetTextByVariant: turn.targetTextByVariant,
+      answerTargetTextByVariant: turns[turnIndex + 1].targetTextByVariant,
       slotEntryIds: []
     }));
     return [...generated, ...dialoguePatterns];
@@ -237,7 +250,7 @@ export const buildTopic = (seed: TopicSeed): Topic => {
     title: seed.title,
     shortTitle: seed.shortTitle,
     description: seed.description,
-    category: seed.category,
+    categoryId: seed.category,
     collectionId: curriculum.collectionId,
     scenes,
     relatedTopicIds: curriculum.relatedTopicIds,
@@ -246,20 +259,19 @@ export const buildTopic = (seed: TopicSeed): Topic => {
     dialogues: seed.dialogues,
     sentencePatterns,
     responsePatterns,
-    tierAvailability: ["romaji-recall", "script-recall", "sentence-production", "response-production"]
+    quizTierIds: ["romaji-recall", "script-recall", "sentence-production", "response-production"]
   };
 };
 
 export const renderPattern = (
   template: string,
   entry: VocabularyEntry,
-  register: Register,
-  language: "en" | "ja",
-  englishLabel = entry.meanings[0]
+  variantId: SpeechVariantId,
+  representation: "source" | "target",
+  sourceLabel = entry.meanings[0]
 ) => {
-  const form = formFor(entry, register);
-  const japanese = form.kanji ?? form.kana;
-  return fill(template, englishLabel, language === "ja" ? japanese : englishLabel);
+  const form = formFor(entry, variantId);
+  return fill(template, sourceLabel, representation === "target" ? form.representations.target : sourceLabel);
 };
 
 export const dialogue = (
@@ -273,7 +285,7 @@ export const dialogue = (
   context,
   turns: turns.map(([speaker, english, formal, informal]) => ({
     speaker,
-    english,
-    japanese: { formal, informal }
+    sourceText: english,
+    targetTextByVariant: { formal, informal }
   }))
 });

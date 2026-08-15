@@ -1,4 +1,4 @@
-import type { PartOfSpeech, Topic, VocabularyEntry } from "./types";
+import type { Topic, VocabularyEntry } from "../types";
 
 export interface VocabularyDefinitions {
   japanese: string;
@@ -56,7 +56,7 @@ const japaneseSceneContexts: Record<string, string> = {
   "air-bases-shows-jsdf:photography-safety": "航空祭で撮影ルールや安全案内に従う"
 };
 
-const japanesePartOfSpeech: Record<PartOfSpeech, string> = {
+const japanesePartOfSpeech: Record<string, string> = {
   noun: "名詞",
   verb: "動詞",
   adjective: "形容詞",
@@ -65,7 +65,7 @@ const japanesePartOfSpeech: Record<PartOfSpeech, string> = {
   counter: "助数詞"
 };
 
-const englishPartOfSpeech: Record<PartOfSpeech, string> = {
+const englishPartOfSpeech: Record<string, string> = {
   noun: "noun",
   verb: "verb",
   adjective: "adjective",
@@ -74,16 +74,16 @@ const englishPartOfSpeech: Record<PartOfSpeech, string> = {
   counter: "counter"
 };
 
-export function definitionsForVocabulary(topic: Topic, entry: VocabularyEntry): VocabularyDefinitions {
-  const scene = topic.scenes.find((candidate) => candidate.id === entry.primarySceneId);
-  const context = japaneseSceneContexts[`${topic.id}:${entry.primarySceneId}`] ?? "この場面について話す";
+export function definitionsForVocabulary(topic: Topic | undefined, entry: VocabularyEntry): VocabularyDefinitions {
+  const scene = topic?.scenes.find((candidate) => candidate.id === entry.primarySceneId);
+  const context = topic ? japaneseSceneContexts[`${topic.id}:${entry.primarySceneId}`] ?? "この場面について話す" : "よくある場面で意思を伝える";
   const japanese = entry.partOfSpeech === "counter"
     ? `数や量を数えるときに使う${japanesePartOfSpeech.counter}。`
-    : `${context}ときに使う${japanesePartOfSpeech[entry.partOfSpeech]}。`;
-  const englishContext = scene ? `the “${scene.title}” situation` : `the “${topic.title}” topic`;
+    : `${context}ときに使う${japanesePartOfSpeech[entry.partOfSpeech] ?? "表現"}。`;
+  const englishContext = scene ? `the “${scene.title}” situation` : topic ? `the “${topic.title}” topic` : "common travel interactions";
   return {
     japanese,
-    english: `The Japanese ${englishPartOfSpeech[entry.partOfSpeech]} for “${entry.meanings.join(" / ")},” used in ${englishContext}.`
+    english: `The Japanese ${englishPartOfSpeech[entry.partOfSpeech] ?? "expression"} for “${entry.meanings.join(" / ")},” used in ${englishContext}.`
   };
 }
 

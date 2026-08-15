@@ -21,7 +21,7 @@ export default defineConfig({
       manifest: {
         name: "Language Learner",
         short_name: "Language",
-        description: "Practical Japanese for travel, entirely offline.",
+        description: "Practical language learning with offline-first lessons and character practice.",
         lang: "en",
         start_url: ".",
         scope: ".",

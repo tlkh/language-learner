@@ -1,17 +1,23 @@
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
-import type { Register } from "../content/types";
 import { db } from "../storage/db";
 
 interface AppStateValue {
-  register: Register;
-  setRegister: (register: Register) => void;
-  welcomeDismissed: boolean;
-  dismissWelcome: () => void;
+  speechVariantByLanguage: Record<string, string>;
+  setSpeechVariant: (languageCode: string, variantId: string) => void;
+  welcomeDismissedByLanguage: Record<string, boolean>;
+  dismissWelcome: (languageCode: string) => void;
 }
 
 const AppStateContext = createContext<AppStateValue | null>(null);
 
-const storedRegister = (): Register => (localStorage.getItem("ll-register") === "informal" ? "informal" : "formal");
+function readStoredMap<T>(key: string): Record<string, T> {
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? "{}") as Record<string, T>;
+  } catch {
+    return {};
+  }
+}
+
 function applySystemTheme(query: MediaQueryList) {
   const dark = query.matches;
   document.documentElement.dataset.theme = dark ? "dark" : "light";
@@ -19,8 +25,17 @@ function applySystemTheme(query: MediaQueryList) {
 }
 
 export function AppStateProvider({ children }: PropsWithChildren) {
-  const [register, setRegisterState] = useState<Register>(storedRegister);
-  const [welcomeDismissed, setWelcomeDismissed] = useState(localStorage.getItem("ll-welcome") === "1");
+  const [speechVariantByLanguage, setSpeechVariantByLanguage] = useState<Record<string, string>>(() => {
+    const stored = readStoredMap<string>("ll-speech-variants");
+    const legacy = localStorage.getItem("ll-register");
+    if (!stored.ja && (legacy === "formal" || legacy === "informal")) stored.ja = legacy;
+    return stored;
+  });
+  const [welcomeDismissedByLanguage, setWelcomeDismissedByLanguage] = useState<Record<string, boolean>>(() => {
+    const stored = readStoredMap<boolean>("ll-welcome-by-language");
+    if (localStorage.getItem("ll-welcome") === "1") stored.ja = true;
+    return stored;
+  });
 
   useEffect(() => {
     const query = matchMedia("(prefers-color-scheme: dark)");
@@ -30,23 +45,26 @@ export function AppStateProvider({ children }: PropsWithChildren) {
     return () => query.removeEventListener("change", update);
   }, []);
 
-  const value = useMemo<AppStateValue>(
-    () => ({
-      register,
-      setRegister: (next) => {
-        setRegisterState(next);
-        localStorage.setItem("ll-register", next);
-        void db.preferences.put({ key: "register", value: next });
-      },
-      welcomeDismissed,
-      dismissWelcome: () => {
-        setWelcomeDismissed(true);
-        localStorage.setItem("ll-welcome", "1");
-        void db.preferences.put({ key: "welcomeDismissed", value: "true" });
-      }
-    }),
-    [register, welcomeDismissed]
-  );
+  const value = useMemo<AppStateValue>(() => ({
+    speechVariantByLanguage,
+    setSpeechVariant: (languageCode, variantId) => {
+      setSpeechVariantByLanguage((current) => {
+        const next = { ...current, [languageCode]: variantId };
+        localStorage.setItem("ll-speech-variants", JSON.stringify(next));
+        return next;
+      });
+      void db.preferences.put({ key: `language:${languageCode}:speechVariant`, value: variantId });
+    },
+    welcomeDismissedByLanguage,
+    dismissWelcome: (languageCode) => {
+      setWelcomeDismissedByLanguage((current) => {
+        const next = { ...current, [languageCode]: true };
+        localStorage.setItem("ll-welcome-by-language", JSON.stringify(next));
+        return next;
+      });
+      void db.preferences.put({ key: `language:${languageCode}:welcomeDismissed`, value: "true" });
+    }
+  }), [speechVariantByLanguage, welcomeDismissedByLanguage]);
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
 }
