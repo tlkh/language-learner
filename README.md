@@ -1,6 +1,6 @@
 # Language Learner
 
-A device-only, offline-first language-learning PWA built around modular, lazily loaded first-party language packs. Japanese is the only currently installed pack. It includes 16 practical topics, five trip-based collections, 48 study scenes, 1,374 unique vocabulary records, four typed quiz tiers, and a 214-unit hiragana and katakana course.
+A device-only, offline-first language-learning PWA built around modular, lazily loaded first-party language packs. Japanese is the only currently installed pack. It includes 16 practical topics, five trip-based collections, 48 study scenes, 1,389 unique vocabulary records, four typed quiz tiers, and a 214-unit hiragana and katakana course.
 
 The scored checkpoints remain topic-based. Scenes organize vocabulary and dialogue study without adding extra locks, while Safety & Conditions stays permanently accessible and specialist interests remain optional.
 

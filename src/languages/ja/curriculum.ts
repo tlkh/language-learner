@@ -120,7 +120,7 @@ export const topicCurriculum: Record<string, TopicCurriculumSpec> = {
   ]),
   "food-allergies": spec("safety-conditions", ["restaurants-food", "emergencies-help"], [
     ["allergies-restrictions", "Allergies and restrictions", "Name allergens, dietary restrictions, and severity clearly."],
-    ["ingredients-cross-contact", "Ingredients and cross-contact", "Read labels and ask about stock, utensils, and preparation."],
+    ["ingredients-cross-contact", "Ingredients, additives and cross-contact", "Read labels for additives, preservatives, and colorings, then ask about stock, utensils, and preparation."],
     ["reaction-help", "Reactions and urgent help", "Describe symptoms, show an allergy card, and request emergency help." ]
   ]),
   weather: spec("safety-conditions", ["emergencies-help"], [

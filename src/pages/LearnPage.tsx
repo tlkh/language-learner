@@ -1,5 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowRight, BookOpenCheck, CircleAlert, Languages, Play, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpenCheck, CircleAlert, Languages, Play, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { BottomSheet } from "../components/BottomSheet";
@@ -10,7 +10,15 @@ import { useLanguagePack } from "../languages/LanguagePackContext";
 import { db, latestIncompleteSession } from "../storage/db";
 
 export function LearnPage() {
-  const { pack, indexes, variantId, welcomeDismissed, dismissWelcome } = useLanguagePack();
+  const {
+    pack,
+    indexes,
+    variantId,
+    welcomeDismissed,
+    dismissWelcome,
+    characterCalloutDismissed,
+    dismissCharacterCallout
+  } = useLanguagePack();
   const base = `/${pack.code}`;
   const pathCollections = pack.collections.filter((collection) => (collection.presentation ?? "path") === "path");
   const featuredTrack = pack.tracks.find((track) => track.presentation === "featured");
@@ -66,21 +74,31 @@ export function LearnPage() {
         </section>
       ) : null}
 
-      <section className="character-callout" aria-labelledby="character-callout-title">
-        <Languages aria-hidden="true" />
-        <div>
-          <h2 id="character-callout-title">Learn {pack.characterCourse.title}</h2>
-          <p>{pack.characterCourse.description}</p>
-          <small>{masteredCharacters} of {pack.characterCourse.items.length} characters mastered</small>
-        </div>
-        <Link className="button button--secondary" to={`${base}/characters`}>Open {pack.characterCourse.navLabel} <ArrowRight aria-hidden="true" /></Link>
-      </section>
+      {!characterCalloutDismissed ? (
+        <section className="character-callout" aria-labelledby="character-callout-title">
+          <Languages aria-hidden="true" />
+          <div>
+            <h2 id="character-callout-title">Learn {pack.characterCourse.title}</h2>
+            <p>{pack.characterCourse.description}</p>
+            <small>{masteredCharacters} of {pack.characterCourse.items.length} characters mastered</small>
+          </div>
+          <button
+            className="icon-button character-callout__dismiss"
+            type="button"
+            onClick={dismissCharacterCallout}
+            aria-label={`Dismiss Learn ${pack.characterCourse.title} card`}
+          >
+            <X aria-hidden="true" />
+          </button>
+          <Link className="button button--secondary" to={`${base}/characters`}>Open {pack.characterCourse.navLabel} <ArrowRight aria-hidden="true" /></Link>
+        </section>
+      ) : null}
 
       {featuredTrack ? (
         <section className="safety-panel" aria-labelledby="safety-title">
           <div className="safety-panel__heading">
             <ShieldCheck aria-hidden="true" />
-            <div><h2 id="safety-title">{featuredTrack.title}</h2><p>{featuredTrack.description}</p></div>
+            <div><h2 id="safety-title">{featuredTrack.title}</h2></div>
           </div>
           <div className="safety-panel__links">
             {featuredTrack.topicIds.map((id) => {

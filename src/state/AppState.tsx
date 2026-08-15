@@ -6,6 +6,8 @@ interface AppStateValue {
   setSpeechVariant: (languageCode: string, variantId: string) => void;
   welcomeDismissedByLanguage: Record<string, boolean>;
   dismissWelcome: (languageCode: string) => void;
+  characterCalloutDismissedByLanguage: Record<string, boolean>;
+  dismissCharacterCallout: (languageCode: string) => void;
 }
 
 const AppStateContext = createContext<AppStateValue | null>(null);
@@ -36,6 +38,9 @@ export function AppStateProvider({ children }: PropsWithChildren) {
     if (localStorage.getItem("ll-welcome") === "1") stored.ja = true;
     return stored;
   });
+  const [characterCalloutDismissedByLanguage, setCharacterCalloutDismissedByLanguage] = useState<
+    Record<string, boolean>
+  >(() => readStoredMap<boolean>("ll-character-callout-by-language"));
 
   useEffect(() => {
     const query = matchMedia("(prefers-color-scheme: dark)");
@@ -63,8 +68,17 @@ export function AppStateProvider({ children }: PropsWithChildren) {
         return next;
       });
       void db.preferences.put({ key: `language:${languageCode}:welcomeDismissed`, value: "true" });
+    },
+    characterCalloutDismissedByLanguage,
+    dismissCharacterCallout: (languageCode) => {
+      setCharacterCalloutDismissedByLanguage((current) => {
+        const next = { ...current, [languageCode]: true };
+        localStorage.setItem("ll-character-callout-by-language", JSON.stringify(next));
+        return next;
+      });
+      void db.preferences.put({ key: `language:${languageCode}:characterCalloutDismissed`, value: "true" });
     }
-  }), [speechVariantByLanguage, welcomeDismissedByLanguage]);
+  }), [characterCalloutDismissedByLanguage, speechVariantByLanguage, welcomeDismissedByLanguage]);
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
 }

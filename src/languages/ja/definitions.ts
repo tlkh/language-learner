@@ -37,7 +37,7 @@ const japaneseSceneContexts: Record<string, string> = {
   "cleaning-laundry-hygiene:bathing-hygiene": "入浴や毎日の衛生について話す",
   "cleaning-laundry-hygiene:cleaning-waste": "掃除やごみの分別について話す",
   "food-allergies:allergies-restrictions": "アレルギーや食事制限を伝える",
-  "food-allergies:ingredients-cross-contact": "材料や調理中の混入を確認する",
+  "food-allergies:ingredients-cross-contact": "原材料、添加物、保存料、着色料、調理中の混入を確認する",
   "food-allergies:reaction-help": "アレルギー症状を伝え、助けを求める",
   "weather:everyday-forecast": "毎日の天気予報について話す",
   "weather:seasonal-planning": "季節の天気に合わせて準備する",

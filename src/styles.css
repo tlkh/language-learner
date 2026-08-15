@@ -952,6 +952,7 @@ html[data-language] .answer-input input[lang]:not([lang="en"]) { font-family: va
 
 .character-callout,
 .character-progress-panel { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--space-sm); padding: var(--space-md); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-md); background: var(--color-surface); }
+.character-callout { grid-template-columns: auto minmax(0, 1fr) auto; }
 .character-callout > svg,
 .character-progress-panel > svg { width: var(--text-xl); height: var(--text-xl); color: var(--color-accent); }
 .character-callout > div,
@@ -963,6 +964,7 @@ html[data-language] .answer-input input[lang]:not([lang="en"]) { font-family: va
 .character-progress-panel p { color: var(--color-muted); font-size: var(--text-sm); }
 .character-callout .button,
 .character-progress-panel .button { grid-column: 1 / -1; }
+.character-callout__dismiss { grid-column: 3; grid-row: 1; align-self: start; }
 
 .character-summary { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-md); background: var(--color-success-soft); }
 .character-summary > svg { width: var(--text-lg); height: var(--text-lg); color: var(--color-success); }
@@ -1099,10 +1101,11 @@ html[data-language] .answer-input input[lang]:not([lang="en"]) { font-family: va
   .quiz-card { width: min(100%, 48rem); margin-inline: auto; }
   .stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .language-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .character-callout,
   .character-progress-panel { grid-template-columns: auto minmax(0, 1fr) auto; }
-  .character-callout .button,
   .character-progress-panel .button { grid-column: auto; }
+  .character-callout { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+  .character-callout .button { grid-column: 3; grid-row: 1; }
+  .character-callout__dismiss { grid-column: 4; }
   .character-selection { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .character-practice-grid { grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: var(--space-sm); }
   .character-practice-card,

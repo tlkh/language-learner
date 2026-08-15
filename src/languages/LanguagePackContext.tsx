@@ -12,6 +12,8 @@ interface LanguagePackContextValue {
   setVariantId: (variantId: string) => void;
   welcomeDismissed: boolean;
   dismissWelcome: () => void;
+  characterCalloutDismissed: boolean;
+  dismissCharacterCallout: () => void;
 }
 
 const LanguagePackContext = createContext<LanguagePackContextValue | null>(null);
@@ -69,7 +71,9 @@ export function LanguagePackProvider({ pack, children }: PropsWithChildren<{ pac
     variantId,
     setVariantId: (next) => appState.setSpeechVariant(pack.code, next),
     welcomeDismissed: Boolean(appState.welcomeDismissedByLanguage[pack.code]),
-    dismissWelcome: () => appState.dismissWelcome(pack.code)
+    dismissWelcome: () => appState.dismissWelcome(pack.code),
+    characterCalloutDismissed: Boolean(appState.characterCalloutDismissedByLanguage[pack.code]),
+    dismissCharacterCallout: () => appState.dismissCharacterCallout(pack.code)
   };
 
   return <LanguagePackContext.Provider value={value}>{children}</LanguagePackContext.Provider>;

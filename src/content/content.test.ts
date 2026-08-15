@@ -16,7 +16,7 @@ describe("Japanese language pack", () => {
     expect(japanesePack.topics).toHaveLength(16);
     expect(japanesePack.collections).toHaveLength(5);
     expect(japanesePack.topics.flatMap((topic) => topic.scenes)).toHaveLength(48);
-    expect(new Set(japanesePack.topics.flatMap((topic) => topic.vocabulary.map((entry) => entry.id))).size).toBe(1374);
+    expect(new Set(japanesePack.topics.flatMap((topic) => topic.vocabulary.map((entry) => entry.id))).size).toBe(1389);
     expect(japanesePack.quiz.tiers).toHaveLength(4);
     expect(japanesePack.sharedVocabularySets[0].vocabulary).toHaveLength(40);
     for (const topic of japanesePack.topics) {
@@ -30,6 +30,26 @@ describe("Japanese language pack", () => {
         expect(scene.responsePatternIds.length).toBeGreaterThanOrEqual(2);
       }
     }
+  });
+
+  it("keeps additive-label vocabulary in the Food Safety ingredient scene", () => {
+    const topic = japanesePack.topics.find((item) => item.id === "food-allergies")!;
+    const scene = topic.scenes.find((item) => item.id === "ingredients-cross-contact")!;
+    const meanings = new Set(
+      scene.vocabularyIds.flatMap((id) => topic.vocabulary.find((entry) => entry.id === id)?.meanings ?? [])
+    );
+
+    expect([...meanings]).toEqual(expect.arrayContaining([
+      "food additive",
+      "additives section",
+      "preservative",
+      "coloring",
+      "sweetener",
+      "flavoring",
+      "antioxidant",
+      "emulsifier",
+      "pH regulator"
+    ]));
   });
 
   it("generates deterministic, scene-balanced sessions for every tier and speech variant", () => {

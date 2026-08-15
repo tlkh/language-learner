@@ -162,7 +162,7 @@ for (const entry of languageCatalog) {
     if (pack.collections.length !== 5) errors.push(`[ja] expected 5 collections, received ${pack.collections.length}`);
     if (pack.topics.flatMap((topic) => topic.scenes).length !== 48) errors.push(`[ja] expected 48 scenes`);
     const uniqueVocabulary = new Set(pack.topics.flatMap((topic) => topic.vocabulary.map((item) => item.id)));
-    if (uniqueVocabulary.size !== 1374) errors.push(`[ja] expected 1,374 vocabulary records, received ${uniqueVocabulary.size}`);
+    if (uniqueVocabulary.size !== 1389) errors.push(`[ja] expected 1,389 vocabulary records, received ${uniqueVocabulary.size}`);
     if (pack.quiz.tiers.length !== 4) errors.push(`[ja] expected 4 quiz tiers`);
     for (const topic of pack.topics) {
       if (topic.scenes.length !== 3) errors.push(`[ja] ${topic.id}: expected 3 scenes`);

@@ -26,6 +26,7 @@ export interface TopicSeed {
   description: string;
   category: Topic["categoryId"];
   domain: RawVocabulary[];
+  sceneBreaks?: readonly [firstSceneEnd: number, secondSceneEnd: number];
   slotMeanings: Array<string | readonly [meaning: string, englishLabel: string]>;
   dialogues: DialogueScenario[];
   sentence: {
@@ -170,9 +171,17 @@ export const buildTopic = (seed: TopicSeed): Topic => {
   if (seed.dialogues.length !== curriculum.scenes.length) {
     throw new Error(`${seed.id} must provide one dialogue for each curriculum scene`);
   }
+  if (seed.sceneBreaks) {
+    const [firstSceneEnd, secondSceneEnd] = seed.sceneBreaks;
+    if (firstSceneEnd <= 0 || secondSceneEnd <= firstSceneEnd || secondSceneEnd >= seed.domain.length) {
+      throw new Error(`${seed.id} has invalid authored scene boundaries`);
+    }
+  }
   const sceneCounts = [0, 0, 0];
   const domain: VocabularyEntry[] = seed.domain.map((item, index): VocabularyEntry => {
-    const sceneIndex = Math.min(2, Math.floor((index * 3) / seed.domain.length));
+    const sceneIndex = seed.sceneBreaks
+      ? index < seed.sceneBreaks[0] ? 0 : index < seed.sceneBreaks[1] ? 1 : 2
+      : Math.min(2, Math.floor((index * 3) / seed.domain.length));
     const localIndex = sceneCounts[sceneIndex]++;
     const entry = makeEntry(seed.id, item, index, "domain");
     return {

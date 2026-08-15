@@ -5,8 +5,9 @@ const seeds: TopicSeed[] = [
     id: "food-allergies",
     title: "Food Allergies & Restrictions",
     shortTitle: "Food Safety",
-    description: "Explain allergies and restrictions, check ingredients, and avoid cross-contact.",
+    description: "Explain allergies and restrictions, check ingredients and additives, and avoid cross-contact.",
     category: "essentials",
+    sceneBreaks: [30, 60],
     domain: raw(
       ["food allergy", "しょくもつアレルギー", "食物アレルギー", "shokumotsu arerugii", "noun", "", "shokumotsu arerugī"],
       ["dietary restriction", "しょくじせいげん", "食事制限", "shokuji seigen"],
@@ -48,6 +49,21 @@ const seeds: TopicSeed[] = [
       ["broth", "スープストック", "スープストック", "suupu sutokku", "noun", "", "sūpu sutokku"],
       ["dashi stock", "だし", "出汁", "dashi", "noun", "だし"],
       ["sauce", "ソース", "ソース", "soosu", "noun", "", "sōsu"],
+      ["food additive", "しょくひんてんかぶつ", "食品添加物", "shokuhin tenkabutsu"],
+      ["additives section", "てんかぶつらん", "添加物欄", "tenkabutsu-ran"],
+      ["preservative", "ほぞんりょう", "保存料", "hozonryou", "noun", "", "hozonryō"],
+      ["coloring", "ちゃくしょくりょう", "着色料", "chakushokuryou", "noun", "", "chakushokuryō"],
+      ["sweetener", "かんみりょう", "甘味料", "kanmiryou", "noun", "", "kanmiryō"],
+      ["flavoring", "こうりょう", "香料", "kouryou", "noun", "", "kōryō"],
+      ["antioxidant", "さんかぼうしざい", "酸化防止剤", "sanka boushizai", "noun", "", "sanka bōshizai"],
+      ["emulsifier", "にゅうかざい", "乳化剤", "nyuukazai", "noun", "", "nyūkazai"],
+      ["pH regulator", "ぴーえいちちょうせいざい", "pH調整剤", "pii eichi chouseizai", "noun", "ピーエイチ調整剤", "pī eichi chōseizai"],
+      ["acidulant", "さんみりょう", "酸味料", "sanmiryou", "noun", "", "sanmiryō"],
+      ["gelling agent", "げるかざい", "ゲル化剤", "gerukazai", "noun", "ゲルかざい"],
+      ["thickener", "ぞうねんざい", "増粘剤", "zounenzai", "noun", "", "zōnenzai"],
+      ["stabilizer", "あんていざい", "安定剤", "anteizai"],
+      ["color fixative", "はっしょくざい", "発色剤", "hasshokuzai"],
+      ["bleaching agent", "ひょうはくざい", "漂白剤", "hyouhakuzai", "noun", "", "hyōhakuzai"],
       ["cross-contact", "こんにゅう", "混入", "konnyuu", "noun", "", "konnyū"],
       ["shared fryer", "きょうようフライヤー", "共用フライヤー", "kyouyou furaiyaa", "noun", "", "kyōyō furaiyā"],
       ["cooking utensils", "ちょうりきぐ", "調理器具", "chouri kigu", "noun", "", "chōri kigu"],
@@ -93,7 +109,9 @@ const seeds: TopicSeed[] = [
       ["peanut", "peanuts"], "tree nuts", ["almond", "almonds"], ["walnut", "walnuts"],
       ["cashew nut", "cashew nuts"], ["pistachio", "pistachios"], ["macadamia nut", "macadamia nuts"], "sesame",
       "soy", "wheat", "gluten", "buckwheat", ["egg", "eggs"], "milk", "dairy products", "cheese", "butter",
-      "fish", "shellfish", "shrimp", "crab", "squid", "octopus", ["clam", "clams"]
+      "fish", "shellfish", "shrimp", "crab", "squid", "octopus", ["clam", "clams"],
+      ["food additive", "food additives"], ["preservative", "preservatives"], ["coloring", "colorings"],
+      ["sweetener", "sweeteners"], ["flavoring", "flavorings"], ["antioxidant", "antioxidants"]
     ],
     dialogues: [
       dialogue("allergy-order", "Explaining an allergy", "Before ordering", [
@@ -105,6 +123,8 @@ const seeds: TopicSeed[] = [
       dialogue("allergy-label", "Checking a label", "At a convenience store", [
         ["traveler", "Does this contain milk or egg?", "これは牛乳か卵を含みますか。", "これ、牛乳か卵が入ってる？"],
         ["local", "The label lists egg.", "表示に卵と書いてあります。", "表示に卵って書いてある。"],
+        ["traveler", "Does it also contain preservatives or coloring?", "保存料や着色料も入っていますか。", "保存料や着色料も入ってる？"],
+        ["local", "The additives section lists a preservative but no coloring.", "添加物欄には保存料の表示がありますが、着色料はありません。", "添加物欄には保存料があるけど、着色料はないよ。"],
         ["traveler", "Is there a dairy-free option?", "乳製品なしの商品はありますか。", "乳製品なしの商品ある？"],
         ["local", "This rice ball has no dairy listed.", "このおにぎりには乳製品の表示がありません。", "このおにぎりには乳製品の表示がないよ。"]
       ]),
