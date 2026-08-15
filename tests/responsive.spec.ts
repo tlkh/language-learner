@@ -24,3 +24,22 @@ test("character practice adapts one session from a phone card to a desktop grid"
   await expect(page.locator(".character-practice-card:visible")).toHaveCount(10);
   await expect(page.getByText("0 of 10 recalled")).toBeVisible();
 });
+
+for (const width of [320, 375, 414, 768]) {
+  test(`focused study fits at ${width}px with one-line rating controls`, async ({ page }) => {
+    await page.setViewportSize({ width, height: width < 700 ? 844 : 1024 });
+    await page.goto("/#/ja/topic/aircraft-jsdf/study?scene=types-roles&mode=focus");
+    await expect(page.getByRole("heading", { name: "Aircraft types and roles" })).toBeVisible();
+    await expect(page.getByLabel("0 of 12 cards resolved")).toBeVisible();
+    await page.getByRole("button", { name: "Flip to answer" }).click();
+
+    const again = page.getByRole("button", { name: "Again" });
+    const gotIt = page.getByRole("button", { name: "Got it" });
+    await expect(again).toBeVisible();
+    await expect(gotIt).toBeVisible();
+    expect(await again.evaluate((element) => getComputedStyle(element).whiteSpace)).toBe("nowrap");
+    expect(await gotIt.evaluate((element) => getComputedStyle(element).whiteSpace)).toBe("nowrap");
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+}

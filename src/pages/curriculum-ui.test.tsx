@@ -42,7 +42,8 @@ describe("trip-based curriculum UI", () => {
     expect(screen.queryByRole("heading", { name: "Finding the gate" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Scene vocabulary" })).toBeInTheDocument();
     expect(screen.getByText("29 unique topic entries. The shared phrase kit is linked separately.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Study 29" })).toHaveAttribute("href", "/ja/topic/airports-flights/study?scene=checkin-border");
+    expect(screen.getByRole("link", { name: "Quick study · 12" })).toHaveAttribute("href", "/ja/topic/airports-flights/study?scene=checkin-border&mode=focus");
+    expect(screen.getByRole("link", { name: "Browse all 29" })).toHaveAttribute("href", "/ja/topic/airports-flights/study?scene=checkin-border&mode=all");
 
     const words = screen.getByRole("heading", { name: "Scene vocabulary" });
     const dialogue = screen.getByRole("heading", { name: "Dialogue in context" });
@@ -55,6 +56,7 @@ describe("trip-based curriculum UI", () => {
 
   it("links the essential phrase kit to immersive study", () => {
     renderWithState(<MemoryRouter><PhraseKitPage /></MemoryRouter>);
-    expect(screen.getByRole("link", { name: "Study all 40" })).toHaveAttribute("href", "/ja/phrases/study");
+    expect(screen.getByRole("link", { name: "Quick study · 12" })).toHaveAttribute("href", "/ja/phrases/study?mode=focus");
+    expect(screen.getByRole("link", { name: "Browse all 40" })).toHaveAttribute("href", "/ja/phrases/study?mode=all");
   });
 });

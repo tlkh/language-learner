@@ -1,12 +1,56 @@
-import { ArrowRight, Languages } from "lucide-react";
+import { ArrowRight, Languages, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { languageCatalog } from "../languages";
+import { usePwaState } from "../pwa/PwaState";
 
 export function LanguageSelectorPage() {
   const [searchParams] = useSearchParams();
+  const { checkForUpdate, needRefresh, update } = usePwaState();
+  const [updating, setUpdating] = useState(false);
+  const [updateFailed, setUpdateFailed] = useState(false);
   const unknown = searchParams.get("unknown");
   const failed = searchParams.get("error");
   const lastLanguage = localStorage.getItem("ll-last-language");
+
+  useEffect(() => {
+    void checkForUpdate().catch(() => undefined);
+  }, [checkForUpdate]);
+
+  const applyRequiredUpdate = async () => {
+    setUpdating(true);
+    setUpdateFailed(false);
+    try {
+      await update();
+    } catch {
+      setUpdating(false);
+      setUpdateFailed(true);
+    }
+  };
+
+  if (needRefresh) {
+    return (
+      <main className="language-selector-page language-selector-page--update" id="main-content">
+        <section className="required-update" role="alert" aria-labelledby="required-update-title">
+          <span className="required-update__mark"><RefreshCw className={updating ? "is-spinning" : undefined} aria-hidden="true" /></span>
+          <p className="quiet-label">Required update</p>
+          <h1 id="required-update-title">A new version is ready</h1>
+          <p>Update before choosing a language so lessons and cached files stay in sync on this device.</p>
+          <button
+            className="button"
+            type="button"
+            aria-busy={updating}
+            data-state={updateFailed ? "error" : undefined}
+            disabled={updating}
+            onClick={() => void applyRequiredUpdate()}
+          >
+            <RefreshCw aria-hidden="true" /> {updating ? "Updating…" : updateFailed ? "Try update again" : "Update and continue"}
+          </button>
+          {updateFailed ? <p className="inline-status is-error" role="status">The update could not be applied. Check your connection and try again.</p> : null}
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="language-selector-page" id="main-content">

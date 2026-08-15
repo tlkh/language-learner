@@ -58,7 +58,6 @@ function AppFrame() {
 function RootFrame() {
   return (
     <div className="app app--selector">
-      <PwaNotice />
       <LanguageSelectorPage />
     </div>
   );

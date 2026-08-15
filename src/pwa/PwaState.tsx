@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
+import { checkForAppUpdate } from "./update";
 
 interface InstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -13,7 +14,8 @@ interface PwaStateValue {
   canInstall: boolean;
   isIos: boolean;
   install: () => Promise<boolean>;
-  update: () => void;
+  checkForUpdate: () => Promise<void>;
+  update: () => Promise<void>;
   dismissUpdate: () => void;
 }
 
@@ -23,15 +25,22 @@ export function PwaStateProvider({ children }: PropsWithChildren) {
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [online, setOnline] = useState(navigator.onLine);
   const [controlled, setControlled] = useState(Boolean(navigator.serviceWorker?.controller));
+  const registrationRef = useRef<ServiceWorkerRegistration | undefined>(undefined);
   const {
     offlineReady: [workboxReady],
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker
   } = useRegisterSW({
-    onRegisteredSW: () => {
+    onRegisteredSW: (_serviceWorkerUrl, registration) => {
+      registrationRef.current = registration;
       void navigator.serviceWorker?.ready.then(() => setControlled(true));
     }
   });
+
+  const checkForUpdate = useCallback(async () => {
+    const registration = await checkForAppUpdate(registrationRef.current);
+    if (registration) registrationRef.current = registration;
+  }, []);
 
   useEffect(() => {
     const onOnline = () => setOnline(true);
@@ -65,10 +74,11 @@ export function PwaStateProvider({ children }: PropsWithChildren) {
         if (choice.outcome === "accepted") setInstallPrompt(null);
         return choice.outcome === "accepted";
       },
-      update: () => void updateServiceWorker(true),
+      checkForUpdate,
+      update: () => updateServiceWorker(true),
       dismissUpdate: () => setNeedRefresh(false)
     }),
-    [controlled, installPrompt, needRefresh, online, setNeedRefresh, updateServiceWorker, workboxReady]
+    [checkForUpdate, controlled, installPrompt, needRefresh, online, setNeedRefresh, updateServiceWorker, workboxReady]
   );
 
   return <PwaStateContext.Provider value={value}>{children}</PwaStateContext.Provider>;

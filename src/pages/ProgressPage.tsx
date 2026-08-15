@@ -1,5 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { BarChart3, BookCheck, Brain, Check, Languages, Target, X } from "lucide-react";
+import { BarChart3, BookCheck, BookOpenCheck, Brain, Check, Languages, Target, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ScreenHeader } from "../components/ScreenHeader";
 import { useLanguagePack } from "../languages/LanguagePackContext";
@@ -36,16 +36,32 @@ export function ProgressPage() {
   });
   const masteredCharacters = data?.characterMastery.filter((item) => item.mastered).length ?? 0;
   const practicedCharacters = data?.characterMastery.length ?? 0;
+  const isFirstSession = data !== undefined && stats.attempts === 0;
+  const startTopic = indexes.topics.get(pack.presentation.startTopicId);
 
   return (
     <div className="page">
       <ScreenHeader title="Progress" description="A quiet record of what you can recall—not a streak to protect." />
-      <section className="stats-grid" aria-label="Learning statistics">
-        <article><Brain aria-hidden="true" /><strong>{stats.mastered}</strong><span>words mastered</span><small>{stats.seen} seen</small></article>
-        <article><Target aria-hidden="true" /><strong>{accuracy}%</strong><span>answer accuracy</span><small>{stats.attempts} answers</small></article>
-        <article><BookCheck aria-hidden="true" /><strong>{stats.passedTiers}</strong><span>tiers passed</span><small>of {pack.topics.length * pack.quiz.tiers.length * pack.speechVariants.length} total</small></article>
-        <article><BarChart3 aria-hidden="true" /><strong>{stats.recentAttempts}</strong><span>answers in 30 days</span><small>{stats.completedSessions} sessions total</small></article>
-      </section>
+      {data === undefined ? (
+        <section className="progress-loading" role="status"><span className="spinner" /> Loading your learning record…</section>
+      ) : isFirstSession ? (
+        <section className="progress-empty-state" aria-labelledby="progress-empty-title">
+          <BookOpenCheck aria-hidden="true" />
+          <div>
+            <span className="quiet-label">Nothing to measure yet</span>
+            <h2 id="progress-empty-title">Your learning record starts with a checkpoint</h2>
+            <p>Answer your first quiz question and this page will begin showing recall, accuracy, and topic readiness—without streaks or daily pressure.</p>
+          </div>
+          {startTopic ? <Link className="button" to={`${base}/topic/${startTopic.id}`}>Open {startTopic.shortTitle}</Link> : null}
+        </section>
+      ) : (
+        <section className="stats-grid" aria-label="Learning statistics">
+          <article><Brain aria-hidden="true" /><strong>{stats.mastered}</strong><span>words mastered</span><small>{stats.seen} seen</small></article>
+          <article><Target aria-hidden="true" /><strong>{accuracy}%</strong><span>answer accuracy</span><small>{stats.attempts} answers</small></article>
+          <article><BookCheck aria-hidden="true" /><strong>{stats.passedTiers}</strong><span>tiers passed</span><small>of {pack.topics.length * pack.quiz.tiers.length * pack.speechVariants.length} total</small></article>
+          <article><BarChart3 aria-hidden="true" /><strong>{stats.recentAttempts}</strong><span>answers in 30 days</span><small>{stats.completedSessions} sessions total</small></article>
+        </section>
+      )}
 
       <section className="character-progress-panel" aria-labelledby="character-progress-title">
         <Languages aria-hidden="true" />
@@ -53,23 +69,27 @@ export function ProgressPage() {
         <Link className="button button--secondary" to={`${base}/characters`}>Practice {pack.characterCourse.navLabel}</Link>
       </section>
 
-      <section className="breakdown-section" aria-labelledby="breakdown-title">
-        <div className="section-heading"><div><h2 id="breakdown-title">Recall breakdown</h2><p>Accuracy by pack-authored quiz step{pack.speechVariants.length > 1 ? " and speech style" : ""}.</p></div></div>
-        <div className="breakdown-grid">
-          {tierBreakdown.map(({ tier, correct, attempts: count }) => <article key={tier.id}><span className="quiet-label">Step {tier.step}</span><strong>{tier.shortTitle}</strong><small>{accuracyLabel(correct, count)}</small></article>)}
-          {pack.speechVariants.length > 1 ? variantBreakdown.map(({ variant, correct, attempts: count }) => <article className="breakdown-register" key={variant.id}><strong lang={pack.locale}>{variant.nativeLabel ? `${variant.nativeLabel} · ` : ""}{variant.label}</strong><small>{accuracyLabel(correct, count)}</small></article>) : null}
-        </div>
-      </section>
+      {data !== undefined && !isFirstSession ? (
+        <>
+          <section className="breakdown-section" aria-labelledby="breakdown-title">
+            <div className="section-heading"><div><h2 id="breakdown-title">Recall breakdown</h2><p>Accuracy by pack-authored quiz step{pack.speechVariants.length > 1 ? " and speech style" : ""}.</p></div></div>
+            <div className="breakdown-grid">
+              {tierBreakdown.map(({ tier, correct, attempts: count }) => <article key={tier.id}><span className="quiet-label">Step {tier.step}</span><strong>{tier.shortTitle}</strong><small>{accuracyLabel(correct, count)}</small></article>)}
+              {pack.speechVariants.length > 1 ? variantBreakdown.map(({ variant, correct, attempts: count }) => <article className="breakdown-register" key={variant.id}><strong lang={pack.locale}>{variant.nativeLabel ? `${variant.nativeLabel} · ` : ""}{variant.label}</strong><small>{accuracyLabel(correct, count)}</small></article>) : null}
+            </div>
+          </section>
 
-      <section className="activity-section" aria-labelledby="activity-title">
-        <div className="section-heading"><div><h2 id="activity-title">Recent activity</h2><p>Your latest answers, without streaks or daily pressure.</p></div></div>
-        {attempts.length ? <ul className="activity-list">{attempts.slice(0, 6).map((attempt) => {
-          const topic = indexes.topics.get(attempt.topicId);
-          const tier = indexes.quizTiers.get(attempt.tierId);
-          const variant = pack.speechVariants.find((item) => item.id === attempt.variantId);
-          return <li key={attempt.id}><span className={attempt.correct ? "activity-mark is-correct" : "activity-mark"} aria-hidden="true">{attempt.correct ? <Check /> : <X />}</span><span className="sr-only">{attempt.correct ? "Correct" : "Incorrect"}</span><span><strong>{topic?.shortTitle ?? pack.name}</strong><small>{tier?.shortTitle ?? attempt.tierId}{pack.speechVariants.length > 1 ? ` · ${variant?.label ?? attempt.variantId}` : ""}</small></span><time dateTime={new Date(attempt.answeredAt).toISOString()}>{new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(attempt.answeredAt)}</time></li>;
-        })}</ul> : <p className="empty-note">Your first completed answer will appear here.</p>}
-      </section>
+          <section className="activity-section" aria-labelledby="activity-title">
+            <div className="section-heading"><div><h2 id="activity-title">Recent activity</h2><p>Your latest answers, without streaks or daily pressure.</p></div></div>
+            <ul className="activity-list">{attempts.slice(0, 6).map((attempt) => {
+              const topic = indexes.topics.get(attempt.topicId);
+              const tier = indexes.quizTiers.get(attempt.tierId);
+              const variant = pack.speechVariants.find((item) => item.id === attempt.variantId);
+              return <li key={attempt.id}><span className={attempt.correct ? "activity-mark is-correct" : "activity-mark"} aria-hidden="true">{attempt.correct ? <Check /> : <X />}</span><span className="sr-only">{attempt.correct ? "Correct" : "Incorrect"}</span><span><strong>{topic?.shortTitle ?? pack.name}</strong><small>{tier?.shortTitle ?? attempt.tierId}{pack.speechVariants.length > 1 ? ` · ${variant?.label ?? attempt.variantId}` : ""}</small></span><time dateTime={new Date(attempt.answeredAt).toISOString()}>{new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(attempt.answeredAt)}</time></li>;
+            })}</ul>
+          </section>
+        </>
+      ) : null}
 
       <details className="readiness-section readiness-disclosure">
         <summary><span><strong id="readiness-title">Topic readiness</strong><small>{passedByTopic.size} of {pack.topics.length} topics started · tap for all</small></span></summary>

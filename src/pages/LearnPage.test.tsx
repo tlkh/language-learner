@@ -4,8 +4,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { LanguagePackProvider } from "../languages/LanguagePackContext";
 import { japanesePack } from "../languages/ja/japanese";
+import type { QuizQuestion } from "../languages/types";
 import { AppStateProvider } from "../state/AppState";
-import { db } from "../storage/db";
+import { db, masteryId } from "../storage/db";
 import { LearnPage } from "./LearnPage";
 
 vi.mock("../components/PwaNotice", () => ({
@@ -27,10 +28,108 @@ function renderLearnPage() {
 afterEach(async () => {
   cleanup();
   localStorage.clear();
-  await Promise.all([db.preferences.clear(), db.characterMastery.clear()]);
+  await Promise.all([
+    db.preferences.clear(),
+    db.characterMastery.clear(),
+    db.mastery.clear(),
+    db.sessions.clear(),
+    db.tierProgress.clear()
+  ]);
 });
 
+const question: QuizQuestion = {
+  id: "resume-question",
+  languageCode: "ja",
+  topicId: "greetings-small-talk",
+  sourceId: "resume-source",
+  sceneId: "greeting-basics",
+  tierId: "romaji-recall",
+  variantId: "formal",
+  prompt: "Hello",
+  promptLanguage: "en",
+  canonicalAnswer: "こんにちは",
+  acceptedAnswers: ["こんにちは"],
+  answerLanguage: "ja",
+  answerRepresentationId: "target",
+  answerLabel: "Japanese",
+  answerPlaceholder: "Type Japanese",
+  helper: ""
+};
+
 describe("Learn page", () => {
+  it("starts with the authored topic when no quiz activity exists", async () => {
+    localStorage.setItem("ll-welcome-by-language", JSON.stringify({ ja: true }));
+    renderLearnPage();
+
+    expect(await screen.findByRole("heading", { name: "Start with conversation" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open topic" })).toHaveAttribute("href", "/ja/topic/greetings-small-talk");
+  });
+
+  it("chooses the topic containing the most weak words", async () => {
+    localStorage.setItem("ll-welcome-by-language", JSON.stringify({ ja: true }));
+    const topic = japanesePack.topics.find((item) => item.id === "aircraft-jsdf");
+    const entries = topic?.vocabulary.filter((entry) => entry.tags.includes("domain")).slice(0, 2) ?? [];
+    await db.mastery.bulkPut(entries.map((entry, index) => ({
+      id: masteryId("ja", topic?.id ?? "", entry.id, "romaji-recall", "formal"),
+      languageCode: "ja",
+      topicId: topic?.id ?? "",
+      sourceId: entry.id,
+      tierId: "romaji-recall",
+      variantId: "formal",
+      confidence: 1,
+      correct: 0,
+      incorrect: 1,
+      updatedAt: 10 + index
+    })));
+
+    renderLearnPage();
+
+    expect(await screen.findByRole("heading", { name: `Review weak words in ${topic?.shortTitle}` })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Review now" })).toHaveAttribute("href", "/ja/topic/aircraft-jsdf/study?mode=focus");
+  });
+
+  it("prioritizes a resumable quiz over a weak-word review", async () => {
+    localStorage.setItem("ll-welcome-by-language", JSON.stringify({ ja: true }));
+    const weakEntry = japanesePack.topics.find((item) => item.id === "aircraft-jsdf")?.vocabulary.find((entry) => entry.tags.includes("domain"));
+    if (!weakEntry) throw new Error("Expected aircraft vocabulary");
+    await Promise.all([
+      db.mastery.put({
+        id: masteryId("ja", "aircraft-jsdf", weakEntry.id, "romaji-recall", "formal"),
+        languageCode: "ja",
+        topicId: "aircraft-jsdf",
+        sourceId: weakEntry.id,
+        tierId: "romaji-recall",
+        variantId: "formal",
+        confidence: 1,
+        correct: 0,
+        incorrect: 1,
+        updatedAt: 10
+      }),
+      db.sessions.put({
+        id: "resume-session",
+        languageCode: "ja",
+        topicId: "greetings-small-talk",
+        tierId: "romaji-recall",
+        variantId: "formal",
+        seed: 1,
+        questions: [question],
+        currentIndex: 0,
+        correct: 0,
+        completed: false,
+        startedAt: 20,
+        updatedAt: 20
+      })
+    ]);
+
+    renderLearnPage();
+
+    expect(await screen.findByRole("link", { name: "Resume" })).toHaveAttribute(
+      "href",
+      "/ja/topic/greetings-small-talk/quiz/romaji-recall?resume=resume-session"
+    );
+    expect(screen.queryByRole("link", { name: "Review now" })).not.toBeInTheDocument();
+  });
+
   it("dismisses the character-course card and remembers the choice", async () => {
     localStorage.setItem("ll-welcome-by-language", JSON.stringify({ ja: true }));
     renderLearnPage();

@@ -7,7 +7,8 @@ import { OfflineBadge } from "../components/PwaNotice";
 import { ProgressFill } from "../components/ProgressFill";
 import { ScreenHeader } from "../components/ScreenHeader";
 import { useLanguagePack } from "../languages/LanguagePackContext";
-import { db, latestIncompleteSession } from "../storage/db";
+import { db, latestIncompleteSession, SHARED_MASTERY_TOPIC_ID } from "../storage/db";
+import { aggregateVocabularyReviewSignals } from "../study/queue";
 
 export function LearnPage() {
   const {
@@ -25,15 +26,17 @@ export function LearnPage() {
   const optionalTrack = pack.tracks.find((track) => track.presentation === "optional");
   const pathTrack = pack.tracks.find((track) => track.presentation === "path");
   const [welcomeOpen, setWelcomeOpen] = useState(!welcomeDismissed);
+  const quizTierKey = pack.quiz.tiers.map((tier) => tier.id).join("|");
   const data = useLiveQuery(async () => {
-    const [resume, progress, weak, characterMastery] = await Promise.all([
+    const tierIds = new Set(pack.quiz.tiers.map((tier) => tier.id));
+    const [resume, progress, mastery, characterMastery] = await Promise.all([
       latestIncompleteSession(pack.code),
       db.tierProgress.where("languageCode").equals(pack.code).toArray(),
-      db.mastery.where("languageCode").equals(pack.code).filter((item) => item.confidence < 3).limit(5).toArray(),
+      db.mastery.where("languageCode").equals(pack.code).filter((item) => item.variantId === variantId && tierIds.has(item.tierId)).toArray(),
       db.characterMastery.where("languageCode").equals(pack.code).toArray()
     ]);
-    return { resume, progress, weak, characterMastery };
-  }, [pack.code]);
+    return { resume, progress, mastery, characterMastery };
+  }, [pack.code, quizTierKey, variantId]);
   const passedByTopic = new Map<string, number>();
   data?.progress.filter((item) => item.passed && item.variantId === variantId).forEach((item) => {
     passedByTopic.set(item.topicId, (passedByTopic.get(item.topicId) ?? 0) + 1);
@@ -42,6 +45,31 @@ export function LearnPage() {
   const resumeTier = data?.resume ? indexes.quizTiers.get(data.resume.tierId) : undefined;
   const startTopic = indexes.topics.get(pack.presentation.startTopicId);
   const masteredCharacters = data?.characterMastery.filter((item) => item.mastered).length ?? 0;
+  const reviewSignals = aggregateVocabularyReviewSignals(data?.mastery ?? []);
+  const weakItems = [...reviewSignals.entries()]
+    .filter(([, signal]) => signal.confidence < 3)
+    .map(([sourceId, signal]) => {
+      const record = data?.mastery.find((item) => item.sourceId === sourceId);
+      return { sourceId, signal, topicId: record?.topicId ?? SHARED_MASTERY_TOPIC_ID };
+    })
+    .filter((item) => indexes.vocabulary.has(item.sourceId))
+    .sort((left, right) => left.signal.confidence - right.signal.confidence || left.signal.latestAttemptAt - right.signal.latestAttemptAt);
+  const weakGroups = new Map<string, { count: number; oldestAttemptAt: number }>();
+  weakItems.forEach((item) => {
+    const current = weakGroups.get(item.topicId);
+    weakGroups.set(item.topicId, {
+      count: (current?.count ?? 0) + 1,
+      oldestAttemptAt: Math.min(current?.oldestAttemptAt ?? item.signal.latestAttemptAt, item.signal.latestAttemptAt)
+    });
+  });
+  const weakReview = [...weakGroups.entries()]
+    .sort((left, right) => right[1].count - left[1].count || left[1].oldestAttemptAt - right[1].oldestAttemptAt)[0];
+  const weakReviewTopic = weakReview?.[0] === SHARED_MASTERY_TOPIC_ID ? undefined : indexes.topics.get(weakReview?.[0] ?? "");
+  const weakReviewHref = weakReview?.[0] === SHARED_MASTERY_TOPIC_ID
+    ? `${base}/phrases/study?mode=focus`
+    : weakReviewTopic
+      ? `${base}/topic/${weakReviewTopic.id}/study?mode=focus`
+      : undefined;
 
   const closeWelcome = () => {
     setWelcomeOpen(false);
@@ -60,6 +88,16 @@ export function LearnPage() {
           </div>
           <Link className="button" to={`${base}/topic/${resumeTopic.id}/quiz/${data.resume.tierId}?resume=${data.resume.id}`}>
             <Play aria-hidden="true" /> Resume
+          </Link>
+        </section>
+      ) : weakReview && weakReviewHref ? (
+        <section className="resume-panel resume-panel--review" aria-labelledby="review-next-title">
+          <div>
+            <h2 id="review-next-title">Review weak words in {weakReviewTopic?.shortTitle ?? "essential phrases"}</h2>
+            <p>{weakReview[1].count} {weakReview[1].count === 1 ? "word needs" : "words need"} another short recall round.</p>
+          </div>
+          <Link className="button" to={weakReviewHref}>
+            <Play aria-hidden="true" /> Review now
           </Link>
         </section>
       ) : startTopic ? (
@@ -170,18 +208,18 @@ export function LearnPage() {
         </section>
       ) : null}
 
-      {data?.weak.length ? (
+      {weakItems.length ? (
         <section className="weak-section" aria-labelledby="weak-title">
-          <div className="section-heading"><div><h2 id="weak-title">{pack.presentation.weakVocabularyTitle}</h2><p>Low-confidence words will be selected first in your next quiz.</p></div></div>
+          <div className="section-heading"><div><h2 id="weak-title">{pack.presentation.weakVocabularyTitle}</h2><p>Low-confidence words are selected first in a short review.</p></div></div>
           <ul className="weak-list">
-            {data.weak.map((item) => {
+            {weakItems.slice(0, 5).map((item) => {
               const topic = indexes.topics.get(item.topicId);
               const entry = indexes.vocabulary.get(item.sourceId);
               return entry ? (
-                <li key={item.id}>
+                <li key={item.sourceId}>
                   <span lang={pack.locale}>{entry.baseForm.representations.target}</span>
                   <span>{entry.meanings[0]}</span>
-                  <Link to={topic ? `${base}/topic/${topic.id}` : `${base}/phrases`}>{topic?.shortTitle ?? "Essential phrases"}</Link>
+                  <Link to={topic ? `${base}/topic/${topic.id}/study?mode=focus` : `${base}/phrases/study?mode=focus`}>{topic?.shortTitle ?? "Essential phrases"}</Link>
                 </li>
               ) : null;
             })}

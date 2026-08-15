@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import { AppNav } from "../components/AppNav";
 import { RegisterSwitch } from "../components/RegisterSwitch";
@@ -8,7 +8,15 @@ import { AppStateProvider } from "../state/AppState";
 import { indonesianCompatibilityFixture } from "./compatibilityFixtures";
 import { LanguagePackProvider, LanguagePackRoute } from "./LanguagePackContext";
 
-afterEach(() => { cleanup(); localStorage.clear(); });
+const pwaState = vi.hoisted(() => ({
+  checkForUpdate: vi.fn(() => Promise.resolve()),
+  needRefresh: false,
+  update: vi.fn(() => Promise.resolve())
+}));
+
+vi.mock("../pwa/PwaState", () => ({ usePwaState: () => pwaState }));
+
+afterEach(() => { cleanup(); localStorage.clear(); vi.clearAllMocks(); });
 
 const state = (children: React.ReactNode) => <AppStateProvider>{children}</AppStateProvider>;
 

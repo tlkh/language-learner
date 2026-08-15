@@ -68,7 +68,10 @@ export function TopicPage() {
   const studyParameters = new URLSearchParams();
   if (selectedScene) studyParameters.set("scene", selectedScene.id);
   if (priority !== "all") studyParameters.set("priority", priority);
-  const studyHref = `${base}/topic/${topic.id}/study${studyParameters.size ? `?${studyParameters}` : ""}`;
+  studyParameters.set("mode", "focus");
+  const focusStudyHref = `${base}/topic/${topic.id}/study?${studyParameters}`;
+  studyParameters.set("mode", "all");
+  const allStudyHref = `${base}/topic/${topic.id}/study?${studyParameters}`;
   const relatedTopics = topic.relatedTopicIds.map((id) => indexes.topics.get(id)).filter(Boolean);
   const activeVariant = pack.speechVariants.find((variant) => variant.id === variantId);
   const topicTiers = topic.quizTierIds.map((id) => indexes.quizTiers.get(id)).filter((tier) => tier !== undefined);
@@ -112,7 +115,10 @@ export function TopicPage() {
         <div className="section-heading section-heading--vocabulary">
           <div><h2 id="vocabulary-title">{selectedScene ? "Scene vocabulary" : "Topic vocabulary"}</h2><p>{vocabularyScopeCount} unique topic entries. The shared phrase kit is linked separately.</p></div>
           <div className="vocabulary-actions">
-            <Link className="button button--study" to={studyHref}><Play aria-hidden="true" /> Study {studyVocabularyCount}</Link>
+            <div className="study-action-group">
+              <Link className="button button--study" to={focusStudyHref}><Play aria-hidden="true" /> Quick study · {Math.min(studyVocabularyCount, 12)}</Link>
+              <Link className="text-link" to={allStudyHref}>Browse all {studyVocabularyCount}</Link>
+            </div>
             <label className="search-field search-field--small"><span className="sr-only">Search this topic</span><Search aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search this topic" /></label>
           </div>
         </div>

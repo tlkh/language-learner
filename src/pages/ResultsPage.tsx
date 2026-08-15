@@ -56,7 +56,10 @@ export function ResultsPage() {
 
       {missed.length ? (
         <section className="review-section" aria-labelledby="review-title">
-          <div className="section-heading"><div><h2 id="review-title">Review the misses</h2><p>These items will be weighted first next time.</p></div></div>
+          <div className="section-heading">
+            <div><h2 id="review-title">Review the misses</h2><p>These items will be weighted first next time.</p></div>
+            <Link className="button button--secondary" to={`${base}/topic/${topic.id}/study?mode=focus`}>Review weak words <ArrowRight aria-hidden="true" /></Link>
+          </div>
           <ul className="review-list">
             {missed.map((attempt) => {
               const question = questionMap.get(attempt.questionId);

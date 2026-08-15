@@ -1,6 +1,6 @@
 # Language Learner
 
-A device-only, offline-first language-learning PWA built around modular, lazily loaded first-party language packs. Japanese is the only currently installed pack. It includes 16 practical topics, five trip-based collections, 48 study scenes, 1,389 unique vocabulary records, four typed quiz tiers, and a 214-unit hiragana and katakana course.
+A device-only, offline-first language-learning PWA built around modular, lazily loaded first-party language packs. It currently ships with Japanese, Indonesian, Vietnamese, and Thai packs, each with practical topics, active-recall checkpoints, shared phrase study, and a pack-authored character course.
 
 The scored checkpoints remain topic-based. Scenes organize vocabulary and dialogue study without adding extra locks, while Safety & Conditions stays permanently accessible and specialist interests remain optional.
 
@@ -13,7 +13,7 @@ npm run dev
 
 Run the checks with `npm test`, `npm run validate:content`, `npm run test:responsive`, and `npm run build`.
 
-See [Authoring language packs](docs/language-packs.md) for the pack contract, a complete minimal example, character-course structure, validation checklist, and guidance for future Indonesian, Vietnamese, and Thai content.
+See [Authoring language packs](docs/language-packs.md) for the pack contract, a complete minimal example, character-course structure, and validation checklist.
 
 ## GitHub Pages
 

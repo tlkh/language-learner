@@ -23,10 +23,13 @@ export function PhraseKitPage() {
       <p className="topic-guidance" role="note">These phrases appear inside topic checkpoints, but progress is recorded only once within this language pack.</p>
       <section className="phrase-study-callout" aria-labelledby="phrase-study-title">
         <div>
-          <h2 id="phrase-study-title">Learn the essentials immersively</h2>
-          <p>Flip through the complete phrase kit one card at a time, with readings and translations kept on the reverse.</p>
+          <h2 id="phrase-study-title">Practice the essentials</h2>
+          <p>Start with a short active-recall round. The complete phrase kit remains available to browse at your own pace.</p>
         </div>
-        <Link className="button" to={`${base}/phrases/study`}><Play aria-hidden="true" /> Study all {phraseSet.vocabulary.length}</Link>
+        <div className="study-action-group">
+          <Link className="button" to={`${base}/phrases/study?mode=focus`}><Play aria-hidden="true" /> Quick study · {Math.min(phraseSet.vocabulary.length, 12)}</Link>
+          <Link className="text-link" to={`${base}/phrases/study?mode=all`}>Browse all {phraseSet.vocabulary.length}</Link>
+        </div>
       </section>
       <div className="phrase-groups">
         {phraseSet.groups.map((group) => (
