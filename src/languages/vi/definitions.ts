@@ -8,7 +8,8 @@ const vietnamesePartOfSpeech: Record<string, string> = {
   phrase: "cụm từ",
   pronoun: "đại từ",
   preposition: "giới từ",
-  number: "số từ"
+  number: "số từ",
+  particle: "tiểu từ"
 };
 
 export function definitionsForVocabulary(topic: Topic | undefined, entry: VocabularyEntry) {

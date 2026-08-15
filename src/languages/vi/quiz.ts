@@ -12,14 +12,18 @@ import { formFor, renderPattern } from "./helpers";
 
 export const QUIZ_SIZE = 24;
 export const PASS_SCORE = 20;
+export const SENTENCE_QUIZ_SIZE = 9;
+export const RESPONSE_QUIZ_SIZE = 6;
 
 export const quizTiers: QuizTierDefinition[] = [
   {
+    // This persistence key predates the content audit. Keep it stable for
+    // existing progress even though the learner-facing tier now tests meaning.
     id: "pronunciation-recall",
     step: 1,
-    title: "Read the word",
-    shortTitle: "Pronunciation",
-    description: "Type the pronunciation of Vietnamese words and phrases.",
+    title: "Understand the word",
+    shortTitle: "Meaning",
+    description: "Read Vietnamese spelling and type the English meaning.",
     sessionSize: QUIZ_SIZE,
     passScore: PASS_SCORE
   },
@@ -38,8 +42,8 @@ export const quizTiers: QuizTierDefinition[] = [
     title: "Build the sentence",
     shortTitle: "Sentences",
     description: "Translate practical English prompts into Vietnamese.",
-    sessionSize: QUIZ_SIZE,
-    passScore: PASS_SCORE
+    sessionSize: SENTENCE_QUIZ_SIZE,
+    passScore: 8
   },
   {
     id: "response-production",
@@ -47,8 +51,8 @@ export const quizTiers: QuizTierDefinition[] = [
     title: "Reply naturally",
     shortTitle: "Responses",
     description: "Read Vietnamese and type an appropriate Vietnamese response.",
-    sessionSize: QUIZ_SIZE,
-    passScore: PASS_SCORE
+    sessionSize: RESPONSE_QUIZ_SIZE,
+    passScore: 5
   }
 ];
 
@@ -82,13 +86,13 @@ const vocabularyQuestion = (topic: Topic, entry: VocabularyEntry, tierId: QuizTi
       variantId: "standard",
       prompt: form.representations.target,
       promptLanguage: "vi",
-      canonicalAnswer: form.representations.reading,
-      acceptedAnswers: [form.representations.reading, ...(form.aliases.reading ?? [])],
-      answerLanguage: "vi",
-      answerRepresentationId: "reading",
-      answerLabel: "Pronunciation",
-      answerPlaceholder: "Type the pronunciation",
-      helper: entry.meanings.join(" · ")
+      canonicalAnswer: entry.meanings[0],
+      acceptedAnswers: [...entry.meanings],
+      answerLanguage: "en",
+      answerRepresentationId: "meaning",
+      answerLabel: "English meaning",
+      answerPlaceholder: "Type the meaning",
+      helper: "Read the Vietnamese word, including its tone marks."
     };
   }
   return {
@@ -167,7 +171,7 @@ const patternQuestions = (topic: Topic, tierId: QuizTierId): QuizQuestion[] => {
         sceneId: pattern.sceneId,
         tierId,
         variantId: "standard",
-        prompt: pattern.promptTargetTextByVariant.standard,
+        prompt: renderPattern(pattern.promptTargetTextByVariant.standard, entry, "standard", "target"),
         promptLanguage: "vi",
         canonicalAnswer: canonical,
         acceptedAnswers: [canonical],

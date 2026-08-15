@@ -16,13 +16,14 @@ const phraseGroup = (id: string, title: string, description: string, start: numb
 const sharedVocabularySets = [{
   id: ESSENTIAL_PHRASE_SET_ID,
   title: "Essential Phrase Kit",
-  description: "Forty high-frequency Vietnamese phrases for getting started and staying understood.",
+  description: "Forty-eight high-frequency Vietnamese phrases for getting started, staying understood, and getting urgent help.",
   vocabulary: essentialPhraseVocabulary,
   groups: [
     phraseGroup("first-phrases", "First phrases", "Greetings, thanks, and apologies.", 0, 10),
     phraseGroup("understanding", "Understanding each other", "Ask for repetition, slower speech, and help.", 10, 20),
     phraseGroup("introductions", "Introductions", "Names, origins, and friendly partings.", 20, 30),
-    phraseGroup("navigation", "Everyday navigation", "Point, ask, and confirm basic information.", 30, 40)
+    phraseGroup("navigation", "Everyday navigation", "Point, ask, and confirm basic information.", 30, 40),
+    phraseGroup("urgent-help", "Urgent help", "Call emergency services and communicate immediate medical or language needs.", 40, 48)
   ]
 }];
 
@@ -41,18 +42,19 @@ export const vietnamesePack: LanguagePack = {
   targetFontFamily: "var(--font-body)",
   representations: [
     { id: "target", label: "Vietnamese", languageTag: "vi", inputMode: "target-script" },
-    { id: "reading", label: "Pronunciation", languageTag: "vi", inputMode: "latin" },
+    { id: "meaning", label: "English meaning", languageTag: "en", inputMode: "latin" },
+    { id: "reading", label: "Vietnamese name", languageTag: "vi", inputMode: "latin" },
     { id: "glyph", label: "Letter or mark", languageTag: "vi", inputMode: "target-script" }
   ],
-  speechVariants: [{ id: "standard", label: "Northern standard", nativeLabel: "Phổ thông", description: "A broadly understood standard pronunciation and spelling." }],
+  speechVariants: [{ id: "standard", label: "Standard Vietnamese", nativeLabel: "Tiếng Việt phổ thông", description: "Standard written Vietnamese. Pronunciation varies substantially between northern, central, and southern speech." }],
   defaultSpeechVariantId: "standard",
   presentation: {
     tagline: "Practical Vietnamese for travel, daily life, and connection.",
     welcomeTitle: "Vietnamese is ready",
     welcomeDescription: "Vietnamese uses the Latin alphabet, with tone marks that change meaning.",
     keyboardTitle: "Vietnamese input",
-    keyboardHelp: "Use a Vietnamese keyboard when possible so you can enter tone marks accurately. The app preserves them when grading.",
-    startTopicId: "greetings-small-talk",
+    keyboardHelp: "Use a Vietnamese Telex or VNI keyboard so you can enter vowel and tone marks accurately. The app preserves them when grading.",
+    startTopicId: "vietnamese-foundations",
     weakVocabularyTitle: "Worth another look"
   },
   tracks: [
@@ -60,7 +62,7 @@ export const vietnamesePack: LanguagePack = {
       id: "vietnamese-path",
       title: "Start here",
       description: "Build a practical base before you travel.",
-      topicIds: ["greetings-small-talk", "numbers-dates-time", "airports-flights", "directions-navigation", "trains-stations", "buses-terminals", "hotels", "restaurants-food", "shopping-payments", "cleaning-laundry-hygiene"],
+      topicIds: ["vietnamese-foundations", "greetings-small-talk", "numbers-dates-time", "airports-flights", "directions-navigation", "trains-stations", "buses-terminals", "hotels", "restaurants-food", "shopping-payments", "cleaning-laundry-hygiene"],
       presentation: "path"
     },
     {

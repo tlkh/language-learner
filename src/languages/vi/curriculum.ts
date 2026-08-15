@@ -18,9 +18,9 @@ export const collections: LearningCollection[] = [
   {
     id: "start-connect",
     title: "Start & Connect",
-    description: "Greetings, numbers, and the everyday language that makes later conversations easier.",
+    description: "Address people respectfully, build core sentences, and handle greetings, numbers, and time.",
     phraseSetIds: [ESSENTIAL_PHRASE_SET_ID],
-    topicIds: ["greetings-small-talk", "numbers-dates-time"],
+    topicIds: ["vietnamese-foundations", "greetings-small-talk", "numbers-dates-time"],
     presentation: "path"
   },
   {
@@ -64,7 +64,12 @@ const spec = (
 });
 
 export const topicCurriculum: Record<string, TopicCurriculumSpec> = {
-  "greetings-small-talk": spec("start-connect", [], [
+  "vietnamese-foundations": spec("start-connect", ["greetings-small-talk"], [
+    ["terms-of-address", "Choose terms of address", "Use relationship-sensitive words for I and you without sounding abrupt."],
+    ["politeness-particles", "Add everyday politeness", "Use acknowledgements, respectful particles, and soft requests."],
+    ["core-grammar", "Build a core sentence", "Express identity, existence, time, wants, and needs with high-frequency grammar words."]
+  ]),
+  "greetings-small-talk": spec("start-connect", ["vietnamese-foundations"], [
     ["meet-introduce", "Meet and introduce yourself", "Names, origins, work, study, and first meetings."],
     ["small-talk", "Small talk and invitations", "Interests, plans, friendly reactions, and invitations."],
     ["contact-partings", "Contact and partings", "Stay in touch, mark occasions, and end conversations warmly."]
@@ -147,6 +152,21 @@ export const topicCurriculum: Record<string, TopicCurriculumSpec> = {
 };
 
 export const priorityOverrides: Record<string, "must-know" | "useful" | "reference"> = {
+  "tôi": "must-know",
+  "bạn": "must-know",
+  "anh": "must-know",
+  "chị": "must-know",
+  "em": "must-know",
+  "dạ": "must-know",
+  "ạ": "must-know",
+  "là": "must-know",
+  "có": "must-know",
+  "không": "must-know",
+  "đang": "must-know",
+  "đã": "must-know",
+  "sẽ": "must-know",
+  "muốn": "must-know",
+  "cần": "must-know",
   "xin chào": "must-know",
   "cảm ơn": "must-know",
   "xin lỗi": "must-know",

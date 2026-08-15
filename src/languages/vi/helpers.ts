@@ -7,12 +7,12 @@ import type {
   Topic,
   VocabularyEntry
 } from "../types";
-import { ESSENTIAL_PHRASE_SET_ID, priorityOverrides, topicCurriculum, type SceneSpec } from "./curriculum";
+import { ESSENTIAL_PHRASE_SET_ID, priorityOverrides, topicCurriculum } from "./curriculum";
 
 export type RawVocabulary = readonly [
   meaning: string,
   target: string,
-  reading: string,
+  legacyReadingHint: string,
   partOfSpeech?: PartOfSpeech,
   aliases?: readonly string[]
 ];
@@ -36,10 +36,10 @@ const slugify = (value: string) => value
 export const v = (
   meaning: string,
   target: string,
-  reading: string,
+  legacyReadingHint: string,
   partOfSpeech: PartOfSpeech = "noun",
   aliases: readonly string[] = []
-): RawVocabulary => [meaning, target, reading, partOfSpeech, aliases];
+): RawVocabulary => [meaning, target, legacyReadingHint, partOfSpeech, aliases];
 
 const coreVocabulary: readonly RawVocabulary[] = [
   v("hello", "xin chào", "sin chow", "phrase"),
@@ -57,10 +57,10 @@ const coreVocabulary: readonly RawVocabulary[] = [
   v("okay / can", "được", "duh-uhk", "phrase"),
   v("I understand", "tôi hiểu", "toy hyew", "phrase"),
   v("I do not understand", "tôi không hiểu", "toy khom hyew", "phrase"),
-  v("please say it again", "nói lại được không?", "noy lie duhk khom", "phrase"),
-  v("please speak slowly", "nói chậm một chút", "noy chum moht choot", "phrase"),
-  v("I speak English", "tôi nói tiếng Anh", "toy noy tyeng ang", "phrase"),
-  v("do you speak English?", "bạn nói tiếng Anh không?", "ban noy tyeng ang khom", "phrase"),
+  v("please say it again", "xin nói lại được không?", "noy lie duhk khom", "phrase"),
+  v("please speak slowly", "xin nói chậm lại một chút", "noy chum moht choot", "phrase"),
+  v("I speak English", "tôi nói được tiếng Anh", "toy noy tyeng ang", "phrase"),
+  v("do you speak English?", "bạn có nói được tiếng Anh không?", "ban noy tyeng ang khom", "phrase"),
   v("I am learning Vietnamese", "tôi đang học tiếng Việt", "toy dang hawk tyeng vyet", "phrase"),
   v("my name is", "tôi tên là", "toy ten lah", "phrase"),
   v("what is your name?", "bạn tên là gì?", "ban ten lah zee", "phrase"),
@@ -79,13 +79,21 @@ const coreVocabulary: readonly RawVocabulary[] = [
   v("today", "hôm nay", "home nay", "noun"),
   v("tomorrow", "ngày mai", "ngai my", "noun"),
   v("now", "bây giờ", "bay zuh", "adverb"),
-  v("later", "sau này", "sow nay", "adverb"),
+  v("later", "lát nữa", "laht noo-uh", "adverb"),
   v("open", "mở cửa", "muh koo-uh", "adjective"),
-  v("closed", "đóng cửa", "dong koo-uh", "adjective")
+  v("closed", "đóng cửa", "dong koo-uh", "adjective"),
+  v("please call the police at 113", "làm ơn gọi công an theo số 113", "", "phrase"),
+  v("please call the fire brigade at 114", "làm ơn gọi cứu hỏa theo số 114", "", "phrase"),
+  v("please call an ambulance at 115", "làm ơn gọi xe cấp cứu theo số 115", "", "phrase"),
+  v("I need a doctor", "tôi cần bác sĩ", "", "phrase"),
+  v("I cannot breathe", "tôi không thở được", "", "phrase"),
+  v("I have a severe allergy", "tôi bị dị ứng nặng", "", "phrase"),
+  v("I need an interpreter", "tôi cần phiên dịch viên", "", "phrase"),
+  v("please write it down", "xin viết ra giúp tôi", "", "phrase")
 ];
 
 const makeEntry = (topicId: string, item: RawVocabulary, index: number, tag: string): VocabularyEntry => {
-  const [meaning, target, reading, partOfSpeech = "noun", aliases = []] = item;
+  const [meaning, target, _reading, partOfSpeech = "noun", aliases = []] = item;
   const id = `${topicId}-${String(index + 1).padStart(3, "0")}-${slugify(meaning)}`;
   return {
     id,
@@ -95,8 +103,11 @@ const makeEntry = (topicId: string, item: RawVocabulary, index: number, tag: str
     priority: "useful",
     meanings: meaning.split(" / "),
     baseForm: {
-      representations: { target, reading },
-      aliases: { target: [...aliases], reading: [] }
+      // English-style respellings cannot encode Vietnamese tones reliably and
+      // vary sharply by dialect. Keep vocabulary in authentic orthography;
+      // the writing course owns letter and tone names in `reading`.
+      representations: { target },
+      aliases: { target: [...aliases] }
     },
     partOfSpeech,
     tags: [topicId, tag]
@@ -138,26 +149,6 @@ const sceneEntryRanges = (entries: VocabularyEntry[], sceneIndex: number) => {
   return entries.slice(start, start + 8);
 };
 
-const scenePattern = (seed: TopicSeed, scene: SceneSpec, entries: VocabularyEntry[], sceneIndex: number): SentencePattern => {
-  const sceneEntries = sceneEntryRanges(entries, sceneIndex);
-  return {
-    id: `${seed.id}-${scene.id}-sentence-slots`,
-    sceneId: scene.id,
-    sourceText: "Please help me with {meaning}.",
-    targetTextByVariant: { standard: "Làm ơn giúp tôi về {term}." },
-    slotEntryIds: sceneEntries.map((entry) => entry.id),
-    slotSourceText: Object.fromEntries(sceneEntries.map((entry) => [entry.id, entry.meanings[0]]))
-  };
-};
-
-const responsePattern = (seed: TopicSeed, scene: SceneSpec, entries: VocabularyEntry[], sceneIndex: number): ResponsePattern => ({
-  id: `${seed.id}-${scene.id}-response-slots`,
-  sceneId: scene.id,
-  promptTargetTextByVariant: { standard: "Bạn có thể giúp tôi không?" },
-  answerTargetTextByVariant: { standard: "Tôi cần {term}." },
-  slotEntryIds: sceneEntryRanges(entries, sceneIndex).map((entry) => entry.id)
-});
-
 export const buildTopic = (seed: TopicSeed): Topic => {
   if (seed.domain.length < 24) throw new Error(`${seed.id} must provide at least 24 domain entries`);
   const curriculum = topicCurriculum[seed.id];
@@ -176,7 +167,6 @@ export const buildTopic = (seed: TopicSeed): Topic => {
   const core = essentialPhraseVocabulary.filter((entry) => !domain.some((item) => item.baseForm.representations.target === entry.baseForm.representations.target));
   const vocabulary = [...domain, ...core];
   const sentencePatterns: SentencePattern[] = curriculum.scenes.flatMap((scene, sceneIndex) => [
-    scenePattern(seed, scene, domain, sceneIndex),
     ...seed.dialogues[sceneIndex].turns.map((turn, turnIndex) => ({
       id: `${seed.id}-${scene.id}-dialogue-sentence-${turnIndex + 1}`,
       sceneId: scene.id,
@@ -186,7 +176,6 @@ export const buildTopic = (seed: TopicSeed): Topic => {
     }))
   ]);
   const responsePatterns: ResponsePattern[] = curriculum.scenes.flatMap((scene, sceneIndex) => [
-    responsePattern(seed, scene, domain, sceneIndex),
     ...seed.dialogues[sceneIndex].turns.slice(0, -1).map((turn, turnIndex) => ({
       id: `${seed.id}-${scene.id}-dialogue-response-${turnIndex + 1}`,
       sceneId: scene.id,

@@ -2,6 +2,32 @@ import { buildTopic, dialogue, v, type TopicSeed } from "./helpers";
 
 const seeds: TopicSeed[] = [
   {
+    id: "vietnamese-foundations",
+    title: "People, Politeness & Core Grammar",
+    shortTitle: "Vietnamese Foundations",
+    description: "Choose respectful terms of address, soften everyday speech, and build essential Vietnamese sentences.",
+    category: "essentials",
+    domain: [
+      v("neutral or formal I", "tôi", "", "pronoun"), v("friendly I", "mình", "", "pronoun"),
+      v("you / peer", "bạn", "", "pronoun"), v("older man / older brother", "anh", "", "pronoun"),
+      v("older woman / older sister", "chị", "", "pronoun"), v("younger person / younger sibling", "em", "", "pronoun"),
+      v("woman around your parents' age / Ms.", "cô", "", "pronoun"), v("man around your parents' age / Mr.", "chú", "", "pronoun"),
+      v("polite yes / acknowledgement", "dạ", "", "particle"), v("respectful sentence-ending particle", "ạ", "", "particle"),
+      v("soft request or suggestion particle", "nhé", "", "particle"), v("excuse me / may I ask", "cho tôi hỏi", "", "phrase"),
+      v("please help me", "giúp tôi với", "", "phrase"), v("please repeat", "xin nói lại", "", "phrase"),
+      v("please write it down for me", "xin viết ra giúp tôi", "", "phrase"), v("yes, thank you", "dạ, cảm ơn", "", "phrase"),
+      v("identity copula / to be", "là", "", "verb"), v("have / exist", "có", "", "verb"),
+      v("not / question particle", "không", "", "particle"), v("ongoing-action marker", "đang", "", "particle"),
+      v("completed or past marker", "đã", "", "particle"), v("future marker", "sẽ", "", "particle"),
+      v("want", "muốn", "", "verb"), v("need", "cần", "", "verb")
+    ],
+    dialogues: [
+      dialogue("foundations-address", "Choosing how to address someone", "Ask which term of address to use with a new acquaintance.", [["traveler", "How should I address you?", "Tôi nên xưng hô với bạn thế nào?"], ["local", "You can call me Linh.", "Bạn cứ gọi tôi là Linh."], ["traveler", "Hello, Linh. I am Alex.", "Chào bạn Linh. Tôi là Alex."]]),
+      dialogue("foundations-politeness", "Speaking politely", "Use ạ, nhé, and dạ in a short exchange.", [["traveler", "Excuse me, where is the station?", "Cho tôi hỏi, nhà ga ở đâu ạ?"], ["local", "Go straight, please.", "Bạn đi thẳng nhé."], ["traveler", "Yes, thank you.", "Dạ, cảm ơn anh."]]),
+      dialogue("foundations-grammar", "Using core grammar", "Combine question, aspect, and future markers.", [["local", "Do you need help?", "Bạn có cần giúp đỡ không?"], ["traveler", "Yes. I am looking for the station.", "Có. Tôi đang tìm nhà ga."], ["local", "I will show you the way.", "Tôi sẽ chỉ đường cho bạn."]])
+    ]
+  },
+  {
     id: "greetings-small-talk",
     title: "Greetings & Small Talk",
     shortTitle: "Greetings",
@@ -31,7 +57,7 @@ const seeds: TopicSeed[] = [
       v("one", "một", "moht", "number"), v("two", "hai", "high", "number"), v("three", "ba", "bah", "number"),
       v("four", "bốn", "bone", "number"), v("five", "năm", "num", "number"), v("six", "sáu", "sow", "number"), v("seven", "bảy", "buy", "number"),
       v("eight", "tám", "tahm", "number"), v("nine", "chín", "cheen", "number"), v("ten", "mười", "mooy", "number"),
-      v("price", "giá", "zah"), v("money", "tiền", "tyen"), v("change", "tiền thối", "tyen toy"), v("cheap", "rẻ", "ray", "adjective"),
+      v("price", "giá", "zah"), v("money", "tiền", "tyen"), v("change", "tiền thừa", "tyen too-uh"), v("cheap", "rẻ", "ray", "adjective"),
       v("expensive", "đắt", "duht", "adjective"), v("total", "tổng cộng", "tome gome"), v("quantity", "số lượng", "so loong"), v("pair", "đôi", "doy"),
       v("piece", "cái", "guy"), v("kilogram", "ki-lô-gam", "kee-lo-gam"), v("hour", "giờ", "zuh"), v("minute", "phút", "foot"),
       v("appointment", "cuộc hẹn", "kook hen"), v("late", "muộn", "moone", "adverb")
@@ -51,7 +77,7 @@ const seeds: TopicSeed[] = [
     domain: [
       v("airport", "sân bay", "sun buy"), v("flight", "chuyến bay", "chwen buy"), v("ticket", "vé máy bay", "vay my buy"), v("passport", "hộ chiếu", "ho chew"),
       v("visa", "thị thực", "tee took"), v("check-in counter", "quầy làm thủ tục", "kway lahm too took"), v("boarding pass", "thẻ lên máy bay", "tay lung my buy"), v("luggage", "hành lý", "han lee"),
-      v("suitcase", "va li", "vah lee"), v("carry-on bag", "hành lý xách tay", "han lee sak tie"), v("checked baggage", "hành lý ký gửi", "han lee kee goo-ee"), v("baggage claim", "quầy nhận hành lý", "kway nyun han lee"),
+      v("suitcase", "va li", "vah lee"), v("carry-on bag", "hành lý xách tay", "han lee sak tie"), v("checked baggage", "hành lý ký gửi", "han lee kee goo-ee"), v("baggage claim", "khu nhận hành lý", "koo nyun han lee"),
       v("customs", "hải quan", "high kwan"), v("immigration", "nhập cảnh", "nyup kanh"), v("security check", "kiểm tra an ninh", "kyem chah an ning"), v("gate", "cửa ra máy bay", "koo-uh rah my buy"),
       v("terminal", "nhà ga", "nya gah"), v("departure", "khởi hành", "khoy hanh"), v("arrival", "đến nơi", "den noy"), v("seat", "chỗ ngồi", "chaw ngoy"),
       v("window seat", "ghế cạnh cửa sổ", "gay kanh koo-uh soh"), v("delay", "trì hoãn", "chee hwan"), v("cancel", "hủy chuyến", "hoo-ee chwen", "verb"), v("connection", "chuyến bay nối chuyến", "chwen buy noy chwen")
@@ -69,7 +95,7 @@ const seeds: TopicSeed[] = [
     description: "Ask for places, follow routes, use addresses, and find your way again.",
     category: "travel",
     domain: [
-      v("street", "đường phố", "duhng foh"), v("road", "con đường", "gone duhng"), v("address", "địa chỉ", "dee-uh chee"), v("map", "bản đồ", "ban daw"),
+      v("street", "phố", "foh"), v("road", "đường", "duhng"), v("address", "địa chỉ", "dee-uh chee"), v("map", "bản đồ", "ban daw"),
       v("landmark", "địa danh", "dee-uh zun"), v("building", "tòa nhà", "twah nya"), v("entrance", "lối vào", "loy vow"), v("exit", "lối ra", "loy rah"),
       v("intersection", "ngã tư", "ngah too"), v("traffic light", "đèn giao thông", "den zow thong"), v("bridge", "cầu", "kow"), v("river", "sông", "sung"),
       v("left", "bên trái", "ben try"), v("right", "bên phải", "ben fie"), v("straight", "thẳng", "tang", "adverb"), v("turn", "rẽ", "ray", "verb"),
@@ -77,7 +103,7 @@ const seeds: TopicSeed[] = [
       v("walk", "đi bộ", "dee bow", "verb"), v("motorbike taxi", "xe ôm", "say ohm"), v("taxi driver", "tài xế taxi", "tie say taxi"), v("lost", "bị lạc", "bee lack", "adjective")
     ],
     dialogues: [
-      dialogue("directions-landmarks", "Finding a landmark", "Ask where a place is.", [["traveler", "Excuse me, where is the market?", "Xin lỗi, chợ ở đâu?"], ["local", "It is next to the bridge.", "Chợ ở bên cạnh cây cầu."], ["traveler", "Is it far from here?", "Có xa từ đây không?"]]),
+      dialogue("directions-landmarks", "Finding a landmark", "Ask where a place is.", [["traveler", "Excuse me, where is the market?", "Cho tôi hỏi, chợ ở đâu ạ?"], ["local", "It is next to the bridge.", "Chợ ở bên cạnh cây cầu."], ["traveler", "Is it far from here?", "Chỗ đó có xa đây không?"]]),
       dialogue("directions-route", "Following a route", "Confirm turns and crossings.", [["traveler", "Should I turn left at the light?", "Tôi có nên rẽ trái ở đèn giao thông không?"], ["local", "No, go straight and turn right.", "Không, đi thẳng rồi rẽ phải."], ["traveler", "How long does it take on foot?", "Đi bộ mất bao lâu?"]]),
       dialogue("directions-lost", "Getting unlost", "Use an address or taxi.", [["traveler", "I am lost. Can you help me?", "Tôi bị lạc. Bạn có thể giúp tôi không?"], ["local", "Show me the address on your phone.", "Cho tôi xem địa chỉ trên điện thoại."], ["traveler", "I will take a taxi there.", "Tôi sẽ đi taxi đến đó."]])
     ]
@@ -94,11 +120,11 @@ const seeds: TopicSeed[] = [
       v("soft seat", "ghế mềm", "gay mem"), v("hard seat", "ghế cứng", "gay koong"), v("sleeper", "giường nằm", "zuhng num"), v("departure board", "bảng giờ tàu", "bang zuh tow"),
       v("ticket office", "phòng vé", "fome vay"), v("entrance gate", "cổng vào", "gome vow"), v("transfer", "chuyển tàu", "chwen tow"), v("next stop", "ga tiếp theo", "gah tyep theo"),
       v("luggage rack", "giá để hành lý", "zah day han lee"), v("aisle", "lối đi", "loy dee"), v("window", "cửa sổ", "koo-uh soh"), v("on time", "đúng giờ", "doong zuh", "adjective"),
-      v("platform number", "số sân ga", "so sun gah"), v("delay announcement", "thông báo chậm", "thong bow chum"), v("sold out", "hết vé", "het vay", "adjective"), v("reservation", "sự đặt trước", "soo duht truoc")
+      v("platform number", "số sân ga", "so sun gah"), v("delay announcement", "thông báo tàu chậm", "thong bow tow chum"), v("sold out", "hết vé", "het vay", "adjective"), v("reservation", "đặt chỗ trước", "duht chaw truoc")
     ],
     dialogues: [
       dialogue("train-tickets", "Buying a ticket", "Ask for a route and seat.", [["traveler", "I would like a ticket to Huế.", "Tôi muốn mua vé đi Huế."], ["local", "One way or return?", "Một chiều hay khứ hồi?"], ["traveler", "Return, with a soft seat, please.", "Khứ hồi, ghế mềm, làm ơn."]]),
-      dialogue("train-transfer", "Changing trains", "Confirm a transfer.", [["traveler", "Which platform is the train to Đà Nẵng?", "Tàu đi Đà Nẵng ở sân ga nào?"], ["local", "Platform three. Change at the next station.", "Sân ga số ba. Đổi tàu ở ga tiếp theo."], ["traveler", "How much time do I have?", "Tôi có bao nhiêu thời gian?"]]),
+      dialogue("train-transfer", "Changing trains", "Confirm a transfer.", [["traveler", "Which platform is the train to Đà Nẵng?", "Tàu đi Đà Nẵng ở sân ga nào?"], ["local", "Platform three. Change at the next station.", "Sân ga số ba. Đổi tàu ở ga tiếp theo."], ["traveler", "How much time do I have?", "Tôi có bao lâu?"]]),
       dialogue("train-disruption", "A rail delay", "Ask about a delayed service.", [["traveler", "Is the train on time?", "Tàu có đúng giờ không?"], ["local", "No, there is a thirty-minute delay.", "Không, tàu bị chậm ba mươi phút."], ["traveler", "Can I change my reservation?", "Tôi có thể đổi đặt chỗ không?"]])
     ]
   },
@@ -133,12 +159,12 @@ const seeds: TopicSeed[] = [
       v("single room", "phòng đơn", "fome done"), v("double room", "phòng đôi", "fome doy"), v("bed", "giường", "zuhng"), v("bathroom", "phòng tắm", "fome tum"),
       v("key", "chìa khóa", "chee-ah khwah"), v("key card", "thẻ phòng", "tay fome"), v("reception", "quầy lễ tân", "kway lay tun"), v("passport copy", "bản sao hộ chiếu", "ban sow ho chew"),
       v("breakfast", "bữa sáng", "boo-ah sahng"), v("elevator", "thang máy", "tang my"), v("floor", "tầng", "tung"), v("Wi-Fi password", "mật khẩu Wi-Fi", "mut khow-ee"),
-      v("air conditioner", "máy lạnh", "my lanh"), v("hot water", "nước nóng", "nooc nong"), v("towel", "khăn tắm", "khan tum"), v("extra pillow", "gối thêm", "goy them"),
+      v("air conditioner", "điều hòa", "dee-ow hwah", "noun", ["máy lạnh"]), v("hot water", "nước nóng", "nooc nong"), v("towel", "khăn tắm", "khan tum"), v("extra pillow", "gối thêm", "goy them"),
       v("quiet", "yên tĩnh", "yen ting", "adjective"), v("noisy", "ồn", "one", "adjective"), v("available", "còn phòng", "gone fome", "adjective"), v("check out", "trả phòng", "chah fome", "verb")
     ],
     dialogues: [
-      dialogue("hotel-checkin", "Checking in", "Confirm a reservation and room.", [["traveler", "I have a reservation under Alex.", "Tôi có đặt phòng tên Alex."], ["local", "May I see your passport?", "Tôi có thể xem hộ chiếu của bạn không?"], ["traveler", "Here it is. Is breakfast included?", "Đây ạ. Bữa sáng có bao gồm không?"]]),
-      dialogue("hotel-problem", "A room problem", "Request a repair or replacement.", [["traveler", "The air conditioner is not working.", "Máy lạnh không hoạt động."], ["local", "We will send someone to check it.", "Chúng tôi sẽ cho người đến kiểm tra."], ["traveler", "Thank you. Could I have another towel?", "Cảm ơn. Tôi có thể xin thêm khăn không?"]]),
+      dialogue("hotel-checkin", "Checking in", "Confirm a reservation and room.", [["traveler", "I have a reservation under Alex.", "Tôi đã đặt phòng dưới tên Alex."], ["local", "May I see your passport?", "Tôi có thể xem hộ chiếu của bạn không?"], ["traveler", "Here it is. Does the room rate include breakfast?", "Đây ạ. Giá phòng có bao gồm bữa sáng không?"]]),
+      dialogue("hotel-problem", "A room problem", "Request a repair or replacement.", [["traveler", "The air conditioner is not working.", "Điều hòa không hoạt động."], ["local", "We will send someone to check it.", "Chúng tôi sẽ cho người đến kiểm tra."], ["traveler", "Thank you. Could I have another towel?", "Cảm ơn. Tôi có thể xin thêm khăn không?"]]),
       dialogue("hotel-checkout", "Checking out", "Return the key and settle the bill.", [["traveler", "I would like to check out.", "Tôi muốn trả phòng."], ["local", "Did you use the minibar?", "Bạn có dùng minibar không?"], ["traveler", "No. Can you call a taxi, please?", "Không. Bạn gọi taxi giúp tôi được không?"]])
     ]
   },
@@ -154,12 +180,12 @@ const seeds: TopicSeed[] = [
       v("meat", "thịt", "teet"), v("chicken", "gà", "gah"), v("beef", "thịt bò", "teet baw"), v("fish", "cá", "gah"),
       v("vegetables", "rau", "row"), v("herbs", "rau thơm", "row tome"), v("soup", "canh", "kanh"), v("sauce", "nước chấm", "nooc chum"),
       v("spicy", "cay", "guy", "adjective"), v("sweet", "ngọt", "ngote", "adjective"), v("salty", "mặn", "mun", "adjective"), v("delicious", "ngon", "ngone", "adjective"),
-      v("vegetarian", "chay", "chigh", "adjective"), v("ice", "đá", "dah"), v("bill", "hóa đơn", "hwah done"), v("takeaway", "mang đi", "mang dee", "phrase")
+      v("vegetarian", "chay", "chigh", "adjective"), v("ice", "đá", "dah"), v("bill", "tính tiền", "ting tyen", "phrase", ["hóa đơn"]), v("takeaway", "mang đi", "mang dee", "phrase")
     ],
     dialogues: [
       dialogue("food-menu", "Choosing a table", "Enter a restaurant and ask for a menu.", [["traveler", "A table for two, please.", "Cho tôi một bàn cho hai người."], ["local", "Here is the menu.", "Đây là thực đơn."], ["traveler", "What do you recommend?", "Bạn giới thiệu món nào?"]]),
-      dialogue("food-order", "Ordering food", "Order a dish and adjust the spice.", [["traveler", "I would like phở with chicken.", "Tôi muốn phở gà."], ["local", "Would you like it spicy?", "Bạn có muốn cay không?"], ["traveler", "A little spicy, please.", "Cay một chút, làm ơn."]]),
-      dialogue("food-payment", "Paying the bill", "Finish a meal and request takeaway.", [["traveler", "Could we have the bill, please?", "Cho chúng tôi xin hóa đơn."], ["local", "Here is your bill.", "Đây là hóa đơn của bạn."], ["traveler", "Please pack the leftovers to go.", "Làm ơn gói phần còn lại mang đi."]])
+      dialogue("food-order", "Ordering food", "Order a dish and adjust the spice.", [["traveler", "I would like phở with chicken.", "Tôi muốn phở gà."], ["local", "Would you like it spicy?", "Bạn có muốn cay không?"], ["traveler", "Please make it a little spicy.", "Cho cay một chút nhé."]]),
+      dialogue("food-payment", "Paying the bill", "Finish a meal and request takeaway.", [["traveler", "Could we have the bill, please?", "Cho chúng tôi tính tiền."], ["local", "Yes, one moment please.", "Vâng, xin chờ một chút."], ["traveler", "Please pack the leftovers to go.", "Làm ơn gói phần còn lại mang đi."]])
     ]
   },
   {
@@ -189,7 +215,7 @@ const seeds: TopicSeed[] = [
     description: "Use laundry machines, find toiletries, keep a room clean, and sort waste.",
     category: "daily-life",
     domain: [
-      v("laundry", "giặt ủi", "zut oo-ee"), v("washing machine", "máy giặt", "my zut"), v("dryer", "máy sấy", "my say"), v("detergent", "bột giặt", "boht zut"),
+      v("laundry", "giặt ủi", "zut oo-ee", "noun", ["giặt là"]), v("washing machine", "máy giặt", "my zut"), v("dryer", "máy sấy", "my say"), v("detergent", "bột giặt", "boht zut"),
       v("soap", "xà phòng", "sah fome"), v("shampoo", "dầu gội", "dow goy"), v("toothbrush", "bàn chải đánh răng", "ban try dung rang"), v("toothpaste", "kem đánh răng", "kem dung rang"),
       v("tissue", "khăn giấy", "khan zay"), v("towel", "khăn", "khan"), v("toilet", "nhà vệ sinh", "nya vay sing"), v("shower", "vòi sen", "voy sen"),
       v("hot water", "nước nóng", "nooc nong"), v("cold water", "nước lạnh", "nooc lanh"), v("clean", "sạch", "suk", "adjective"), v("dirty", "bẩn", "buhn", "adjective"),
@@ -209,16 +235,16 @@ const seeds: TopicSeed[] = [
     description: "Name allergies clearly, ask about ingredients, and respond safely to a reaction.",
     category: "safety",
     domain: [
-      v("allergy", "dị ứng", "zee oong"), v("food restriction", "kiêng ăn", "kyeng an"), v("ingredient", "nguyên liệu", "ngwen lee-oo"), v("peanut", "đậu phộng", "dow fong"),
-      v("tree nut", "hạt cây", "hut guy"), v("shellfish", "hải sản có vỏ", "high sun gaw vaw"), v("fish sauce", "nước mắm", "nooc mum"), v("milk", "sữa", "soo-uh"),
+      v("allergy", "dị ứng", "zee oong"), v("food restriction", "kiêng ăn", "kyeng an"), v("ingredient", "nguyên liệu", "ngwen lee-oo"), v("peanut", "đậu phộng", "dow fong", "noun", ["lạc"]),
+      v("tree nut", "các loại hạt", "gak loy hut"), v("shellfish", "hải sản có vỏ", "high sun gaw vaw"), v("fish sauce", "nước mắm", "nooc mum"), v("milk", "sữa", "soo-uh"),
       v("egg", "trứng", "choong"), v("wheat", "lúa mì", "loo-ah mee"), v("soy", "đậu nành", "dow nanh"), v("gluten", "gluten", "gloo-ten"),
       v("vegetarian", "ăn chay", "an chigh"), v("vegan", "thuần chay", "toon chigh"), v("safe", "an toàn", "an twan", "adjective"), v("dangerous", "nguy hiểm", "ngwee hyem", "adjective"),
       v("contain", "có chứa", "gaw choo-ah", "verb"), v("without", "không có", "khom gaw", "preposition"), v("separate utensil", "dụng cụ riêng", "zoong koo zeeng"), v("cross-contact", "nhiễm chéo", "nyem cheo"),
       v("symptom", "triệu chứng", "chee-ow choong"), v("rash", "phát ban", "fut ban"), v("swelling", "sưng", "soong"), v("emergency", "cấp cứu", "kup koo", "noun")
     ],
     dialogues: [
-      dialogue("allergy-order", "Explaining an allergy", "Tell a restaurant about a serious allergy.", [["traveler", "I have a peanut allergy.", "Tôi bị dị ứng với đậu phộng."], ["local", "Does this dish contain peanuts?", "Món này có đậu phộng không?"], ["traveler", "Please prepare it without peanuts.", "Làm ơn nấu món này không có đậu phộng."]]),
-      dialogue("allergy-ingredients", "Checking ingredients", "Ask about sauces and utensils.", [["traveler", "Does the sauce contain fish sauce?", "Nước chấm có nước mắm không?"], ["local", "Yes. We can prepare a separate dish.", "Có. Chúng tôi có thể làm một món riêng."], ["traveler", "Thank you for being careful.", "Cảm ơn bạn đã cẩn thận."]]),
+      dialogue("allergy-order", "Explaining an allergy", "Tell a restaurant about a serious allergy.", [["traveler", "I have a severe peanut allergy.", "Tôi bị dị ứng nặng với đậu phộng."], ["local", "This dish contains peanuts.", "Món này có đậu phộng."], ["traveler", "Then I cannot eat it.", "Vậy thì tôi không thể ăn món này."]]),
+      dialogue("allergy-ingredients", "Checking ingredients", "Ask about sauces and utensils.", [["traveler", "Does the sauce contain fish sauce?", "Nước chấm có nước mắm không?"], ["local", "Yes. We can prepare a separate dish with separate utensils.", "Có. Chúng tôi có thể làm một món riêng bằng dụng cụ riêng."], ["traveler", "Thank you for being careful.", "Cảm ơn bạn đã cẩn thận."]]),
       dialogue("allergy-reaction", "A reaction", "Describe symptoms and ask for help.", [["traveler", "I am having an allergic reaction.", "Tôi đang bị phản ứng dị ứng."], ["local", "What symptoms do you have?", "Bạn có triệu chứng gì?"], ["traveler", "My face is swelling. Please call an ambulance.", "Mặt tôi đang sưng. Làm ơn gọi xe cấp cứu."]])
     ]
   },
@@ -233,7 +259,7 @@ const seeds: TopicSeed[] = [
       v("cloud", "mây", "my"), v("rain", "mưa", "moo-ah"), v("storm", "bão", "bow"), v("thunder", "sấm", "sum"),
       v("lightning", "sét", "set"), v("wind", "gió", "zaw"), v("humidity", "độ ẩm", "do um"), v("flood", "lũ lụt", "loo loot"),
       v("sunny", "trời nắng", "choy nung", "adjective"), v("cloudy", "nhiều mây", "nyew my", "adjective"), v("rainy", "trời mưa", "choy moo-ah", "adjective"), v("hot", "nóng", "nong", "adjective"),
-      v("cool", "mát", "maht", "adjective"), v("cold", "lạnh", "lanh", "adjective"), v("umbrella", "ô", "oh"), v("raincoat", "áo mưa", "ow moo-ah"),
+      v("cool", "mát", "maht", "adjective"), v("cold", "lạnh", "lanh", "adjective"), v("umbrella", "ô", "oh", "noun", ["dù"]), v("raincoat", "áo mưa", "ow moo-ah"),
       v("sunscreen", "kem chống nắng", "kem chong nung"), v("warning", "cảnh báo", "kanh bow"), v("evacuate", "sơ tán", "suh tan", "verb"), v("safe place", "nơi an toàn", "noy an twan")
     ],
     dialogues: [
@@ -257,9 +283,9 @@ const seeds: TopicSeed[] = [
       v("phone number", "số điện thoại", "so deen twie"), v("insurance", "bảo hiểm", "bow hyem"), v("shelter", "nơi trú ẩn", "noy choo un"), v("safe", "an toàn", "an twan", "adjective")
     ],
     dialogues: [
-      dialogue("emergency-medical", "Getting medical help", "Describe an urgent symptom.", [["traveler", "Please help me. I am hurt.", "Làm ơn giúp tôi. Tôi bị thương."], ["local", "Where does it hurt?", "Bạn đau ở đâu?"], ["traveler", "My leg hurts. Please call an ambulance.", "Chân tôi bị đau. Làm ơn gọi xe cấp cứu."]]),
-      dialogue("emergency-police", "Reporting a loss", "Ask the police for help.", [["traveler", "I lost my passport.", "Tôi bị mất hộ chiếu."], ["local", "Please report it at the police station.", "Vui lòng báo ở đồn công an."], ["traveler", "Where is the nearest station?", "Đồn gần nhất ở đâu?"]]),
-      dialogue("emergency-evacuation", "Following instructions", "Move to a safe place.", [["local", "There is a fire. Leave the building now.", "Có cháy. Hãy rời khỏi tòa nhà ngay."], ["traveler", "Where is the emergency exit?", "Lối thoát hiểm ở đâu?"], ["local", "Follow me to the safe area.", "Đi theo tôi đến khu vực an toàn."]])
+      dialogue("emergency-medical", "Getting medical help", "Describe an urgent symptom.", [["traveler", "Please help me. I cannot breathe.", "Làm ơn giúp tôi. Tôi không thở được."], ["local", "I will call 115 for an ambulance.", "Tôi sẽ gọi xe cấp cứu theo số 115."], ["traveler", "I need a doctor now.", "Tôi cần bác sĩ ngay."]]),
+      dialogue("emergency-police", "Reporting a loss", "Ask the police for help.", [["traveler", "My passport was stolen.", "Hộ chiếu của tôi bị mất cắp."], ["local", "Call the police at 113.", "Hãy gọi công an theo số 113."], ["traveler", "Where is the nearest police station?", "Đồn công an gần nhất ở đâu?"]]),
+      dialogue("emergency-evacuation", "Following instructions", "Move to a safe place.", [["local", "There is a fire. Call 114 and leave the building now.", "Có cháy. Hãy gọi 114 và rời khỏi tòa nhà ngay."], ["traveler", "Where is the emergency exit?", "Lối thoát hiểm ở đâu?"], ["local", "Follow me to the safe area.", "Đi theo tôi đến khu vực an toàn."]])
     ]
   },
   {
@@ -294,12 +320,12 @@ const seeds: TopicSeed[] = [
       v("manager", "quản lý", "kwun lee"), v("meeting", "cuộc họp", "kook hope"), v("schedule", "lịch trình", "lik ching"), v("task", "nhiệm vụ", "nyem voo"),
       v("project", "dự án", "zoo an"), v("deadline", "hạn chót", "hun chote"), v("document", "tài liệu", "tie lee-oo"), v("email", "thư điện tử", "too deen too"),
       v("example", "ví dụ", "vee zoo"), v("question", "câu hỏi", "kow hoy"), v("answer", "câu trả lời", "kow chah loy"), v("explain", "giải thích", "zye tik", "verb"),
-      v("understand", "hiểu", "hyew", "verb"), v("agree", "đồng ý", "dome ee", "verb"), v("finish", "hoàn thành", "hwan tang", "verb"), v("follow up", "theo dõi", "teo zoy", "verb")
+      v("understand", "hiểu", "hyew", "verb"), v("agree", "đồng ý", "dome ee", "verb"), v("finish", "hoàn thành", "hwan tang", "verb"), v("follow up", "liên hệ lại", "lyen hay lie", "verb")
     ],
     dialogues: [
       dialogue("work-introduce", "Introducing yourself", "Say what you do.", [["traveler", "I work in technology.", "Tôi làm việc trong ngành công nghệ."], ["local", "Where is your office?", "Văn phòng của bạn ở đâu?"], ["traveler", "It is in Singapore.", "Ở Singapore."]]),
       dialogue("work-schedule", "Arranging a task", "Confirm a meeting and deadline.", [["traveler", "When is the meeting?", "Cuộc họp vào khi nào?"], ["local", "Tomorrow at nine in the morning.", "Ngày mai lúc chín giờ sáng."], ["traveler", "When is the deadline?", "Hạn chót là khi nào?"]]),
-      dialogue("work-clarify", "Clarifying", "Ask for an example and confirm next steps.", [["traveler", "I do not understand this part.", "Tôi không hiểu phần này."], ["local", "I will explain with an example.", "Tôi sẽ giải thích bằng một ví dụ."], ["traveler", "Thank you. I will follow up by email.", "Cảm ơn. Tôi sẽ theo dõi bằng email."]])
+      dialogue("work-clarify", "Clarifying", "Ask for an example and confirm next steps.", [["traveler", "I do not understand this part.", "Tôi không hiểu phần này."], ["local", "I will explain with an example.", "Tôi sẽ giải thích bằng một ví dụ."], ["traveler", "Thank you. I will follow up by email.", "Cảm ơn. Tôi sẽ liên hệ lại qua email."]])
     ]
   },
   {
@@ -318,7 +344,7 @@ const seeds: TopicSeed[] = [
     ],
     dialogues: [
       dialogue("culture-tickets", "Visiting a place", "Ask about tickets and hours.", [["traveler", "How much is the entrance fee?", "Phí vào cửa bao nhiêu tiền?"], ["local", "It is one hundred thousand dong.", "Một trăm nghìn đồng."], ["traveler", "What time do you close?", "Mấy giờ đóng cửa?"]]),
-      dialogue("culture-respect", "A respectful visit", "Follow local customs.", [["local", "Please remove your shoes here.", "Vui lòng cởi giày ở đây."], ["traveler", "May I take a photo?", "Tôi có thể chụp ảnh không?"], ["local", "Yes, but please be quiet.", "Được, nhưng vui lòng giữ yên lặng."]]),
+      dialogue("culture-respect", "A respectful visit", "Follow local customs.", [["local", "Please remove your shoes here.", "Vui lòng cởi giày ở đây."], ["traveler", "May I take a photo?", "Tôi có thể chụp ảnh không?"], ["local", "Yes, but please be quiet.", "Được, nhưng vui lòng giữ im lặng."]]),
       dialogue("culture-memories", "Sharing a memory", "Talk about a place and a souvenir.", [["traveler", "This place is beautiful.", "Nơi này rất đẹp."], ["local", "Would you like a local souvenir?", "Bạn có muốn mua quà lưu niệm địa phương không?"], ["traveler", "Yes. I want something for my family.", "Có. Tôi muốn mua gì đó cho gia đình."]])
     ]
   }

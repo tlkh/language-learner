@@ -4,29 +4,42 @@ type RawUnit = readonly [glyph: string, reading: string, aliases?: readonly stri
 type RawGroup = readonly [id: string, title: string, units: readonly RawUnit[]];
 
 const vowels: readonly RawGroup[] = [
-  ["a", "A", [["a", "a"], ["ă", "ă / short a"], ["â", "â / central a"]]],
+  ["a", "A", [["a", "a"], ["ă", "ă"], ["â", "â"]]],
   ["e", "E", [["e", "e"], ["ê", "ê"]]],
   ["i", "I", [["i", "i"]]],
   ["o", "O", [["o", "o"], ["ô", "ô"], ["ơ", "ơ"]]],
   ["u", "U", [["u", "u"], ["ư", "ư"]]],
-  ["y", "Y", [["y", "y"]]]
+  ["y", "Y", [["y", "i dài", ["y"]]]]
 ];
 
 const consonants: readonly RawGroup[] = [
-  ["b-c", "B–C", [["b", "b"], ["c", "c"]]],
-  ["d-d", "D–Đ", [["d", "d"], ["đ", "đ"]]],
-  ["g-h", "G–H", [["g", "g"], ["h", "h"]]],
-  ["k-l", "K–L", [["k", "k"], ["l", "l"]]],
-  ["m-n", "M–N", [["m", "m"], ["n", "n"]]],
-  ["p-q", "P–Q", [["p", "p"], ["q", "q"]]],
-  ["r-s", "R–S", [["r", "r"], ["s", "s"]]],
-  ["t-v", "T–V", [["t", "t"], ["v", "v"]]],
-  ["x", "X", [["x", "x"]]]
+  ["b-c", "B–C", [["b", "bê", ["b"]], ["c", "xê", ["c"]]]],
+  ["d-d", "D–Đ", [["d", "dê", ["d"]], ["đ", "đê", ["đ"]]]],
+  ["g-h", "G–H", [["g", "giê", ["g"]], ["h", "hát", ["h"]]]],
+  ["k-l", "K–L", [["k", "ca", ["ka", "k"]], ["l", "e-lờ", ["l"]]]],
+  ["m-n", "M–N", [["m", "em-mờ", ["m"]], ["n", "en-nờ", ["n"]]]],
+  ["p-q", "P–Q", [["p", "pê", ["p"]], ["q", "quy", ["qu", "q"]]]],
+  ["r-s", "R–S", [["r", "e-rờ", ["r"]], ["s", "ét-xì", ["s"]]]],
+  ["t-v", "T–V", [["t", "tê", ["t"]], ["v", "vê", ["v"]]]],
+  ["x", "X", [["x", "ích-xì", ["x"]]]]
 ];
 
 const toneMarks: readonly RawGroup[] = [
-  ["tone-examples", "Tone-mark examples", [
-    ["á", "acute / sắc"], ["à", "grave / huyền"], ["ả", "hook above / hỏi"], ["ã", "tilde / ngã"], ["ạ", "dot below / nặng"]
+  ["tone-examples", "Six tones on a", [
+    ["a", "ngang", ["level", "level / ngang"]],
+    ["á", "sắc", ["acute", "acute / sắc"]],
+    ["à", "huyền", ["grave", "grave / huyền"]],
+    ["ả", "hỏi", ["hook above", "hook above / hỏi"]],
+    ["ã", "ngã", ["tilde", "tilde / ngã"]],
+    ["ạ", "nặng", ["dot below", "dot below / nặng"]]
+  ]]
+];
+
+const combinedConsonants: readonly RawGroup[] = [
+  ["common", "Common consonant units and example words", [
+    ["ch", "chào"], ["gh", "ghế"], ["gi", "giờ"], ["kh", "không"],
+    ["ng", "ngon"], ["ngh", "nghề"], ["nh", "nhà"], ["ph", "phở"],
+    ["qu", "quá"], ["th", "thích"], ["tr", "trời"]
   ]]
 ];
 
@@ -69,13 +82,25 @@ const alphabet: CharacterCollection = {
 
 const tones: CharacterCollection = {
   id: "tones",
-  title: "Tone marks",
-  description: "Recognize the five written tone marks used alongside the level tone.",
+  title: "Six tones",
+  description: "Recognize all six tones: the unmarked level tone and the five marked tones.",
   sections: [{
     id: "tones-marks",
-    title: "Five tone marks",
-    description: "Tone marks are part of Vietnamese spelling and should be kept when writing.",
+    title: "Tone names and marks",
+    description: "Ngang has no mark; sắc, huyền, hỏi, ngã, and nặng use marks that are part of spelling.",
     groups: buildGroups("tones", "marks", toneMarks)
+  }]
+};
+
+const consonantUnits: CharacterCollection = {
+  id: "combined-consonants",
+  title: "Combined consonants",
+  description: "Learn the common digraphs and the ngh trigraph used as consonant spelling units.",
+  sections: [{
+    id: "combined-consonants-main",
+    title: "Digraphs and trigraph",
+    description: "These units are important for both Vietnamese spelling and pronunciation.",
+    groups: buildGroups("combined-consonants", "main", combinedConsonants)
   }]
 };
 
@@ -83,17 +108,17 @@ export const vietnameseCharacterCourse: CharacterCourse = {
   id: "vietnamese-writing",
   title: "Alphabet & tones",
   navLabel: "Alphabet",
-  description: "Learn the Vietnamese alphabet and recognize the tone marks that carry meaning.",
-  collections: [alphabet, tones],
+  description: "Learn the 29-letter alphabet, all six tones, and the common multi-letter consonant units.",
+  collections: [alphabet, tones, consonantUnits],
   items,
   drillModes: [{
     id: "recognition",
     title: "Read the letter",
-    description: "Type the letter name or tone-mark reading.",
+    description: "Type the Vietnamese letter or tone name, or the example word for a combined consonant.",
     promptRepresentationId: "glyph",
     answerRepresentationId: "reading",
-    answerLabel: "Letter or tone reading",
-    answerPlaceholder: "Type the reading"
+    answerLabel: "Vietnamese name or example",
+    answerPlaceholder: "Type the name or example"
   }],
   defaultDrillModeId: "recognition",
   sessionSizes: [10, 20, "all"]

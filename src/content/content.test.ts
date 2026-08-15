@@ -18,23 +18,53 @@ describe("language registry", () => {
 
 describe("Vietnamese language pack", () => {
   it("ships a complete practical curriculum and one standard speech variant", () => {
-    expect(vietnamesePack.topics).toHaveLength(16);
+    expect(vietnamesePack.topics).toHaveLength(17);
     expect(vietnamesePack.collections).toHaveLength(5);
-    expect(vietnamesePack.topics.flatMap((topic) => topic.scenes)).toHaveLength(48);
+    expect(vietnamesePack.topics.flatMap((topic) => topic.scenes)).toHaveLength(51);
     expect(vietnamesePack.speechVariants).toHaveLength(1);
-    expect(vietnamesePack.sharedVocabularySets[0].vocabulary).toHaveLength(40);
-    expect(vietnamesePack.characterCourse.items).toHaveLength(34);
+    expect(vietnamesePack.sharedVocabularySets[0].vocabulary).toHaveLength(48);
+    expect(vietnamesePack.characterCourse.items).toHaveLength(46);
     for (const topic of vietnamesePack.topics) {
       expect(topic.vocabulary.filter((entry) => entry.tags.includes("domain")).length).toBe(24);
       expect(topic.dialogues).toHaveLength(3);
       expect(topic.scenes).toHaveLength(3);
+      expect(topic.sentencePatterns).toHaveLength(9);
+      expect(topic.responsePatterns).toHaveLength(6);
       expect(topic.quizTierIds).toEqual(vietnamesePack.quiz.tiers.map((tier) => tier.id));
       for (const tier of vietnamesePack.quiz.tiers) {
         const questions = vietnamesePack.quiz.generate(topic, { languageCode: "vi", topicId: topic.id, tierId: tier.id, variantId: "standard", seed: 42, count: tier.sessionSize });
-        expect(questions).toHaveLength(24);
-        expect(new Set(questions.map((item) => item.id)).size).toBe(24);
+        expect(questions).toHaveLength(tier.sessionSize);
+        expect(new Set(questions.map((item) => item.id)).size).toBe(tier.sessionSize);
       }
     }
+  });
+
+  it("teaches foundational address terms, all six tones, and combined consonants", () => {
+    const foundations = vietnamesePack.topics.find((topic) => topic.id === "vietnamese-foundations")!;
+    const targets = foundations.vocabulary.filter((entry) => entry.tags.includes("domain")).map((entry) => entry.baseForm.representations.target);
+    expect(targets).toEqual(expect.arrayContaining(["tôi", "bạn", "anh", "chị", "em", "dạ", "ạ", "là", "có", "không", "đang", "đã", "sẽ"]));
+
+    const toneItems = vietnamesePack.characterCourse.items.filter((item) => item.id.startsWith("tones-"));
+    expect(toneItems.map((item) => item.representations.glyph)).toEqual(["a", "á", "à", "ả", "ã", "ạ"]);
+    expect(toneItems.map((item) => item.representations.reading)).toEqual(["ngang", "sắc", "huyền", "hỏi", "ngã", "nặng"]);
+
+    const combined = vietnamesePack.characterCourse.items.filter((item) => item.id.startsWith("combined-consonants-"));
+    expect(combined.map((item) => item.representations.glyph)).toEqual(["ch", "gh", "gi", "kh", "ng", "ngh", "nh", "ph", "qu", "th", "tr"]);
+  });
+
+  it("includes Vietnam's emergency numbers and tests meanings instead of pseudo-phonetics", () => {
+    const phrases = vietnamesePack.sharedVocabularySets[0].vocabulary.map((entry) => entry.baseForm.representations.target);
+    expect(phrases).toEqual(expect.arrayContaining([
+      "làm ơn gọi công an theo số 113",
+      "làm ơn gọi cứu hỏa theo số 114",
+      "làm ơn gọi xe cấp cứu theo số 115"
+    ]));
+
+    const topic = vietnamesePack.topics.find((item) => item.id === "greetings-small-talk")!;
+    const question = vietnamesePack.quiz.generate(topic, { languageCode: "vi", topicId: topic.id, tierId: "pronunciation-recall", variantId: "standard", seed: 1, count: 1 })[0];
+    expect(question.promptLanguage).toBe("vi");
+    expect(question.answerLanguage).toBe("en");
+    expect(question.answerRepresentationId).toBe("meaning");
   });
 
   it("preserves Vietnamese tone marks during grading", () => {
