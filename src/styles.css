@@ -689,7 +689,7 @@ h3 { font-size: var(--text-md); }
   transform: translateY(var(--space-sm));
 }
 
-.study-card-motion { z-index: var(--z-base); touch-action: pan-y; will-change: transform, opacity; }
+.study-card-motion { z-index: var(--z-base); touch-action: pan-y; will-change: transform; }
 .study-card-motion:active { cursor: grabbing; }
 
 .study-card {

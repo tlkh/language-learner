@@ -18,15 +18,13 @@ interface CardTransition {
 
 const cardVariants = {
   enter: ({ direction, reduced }: CardTransition) => ({
-    x: reduced ? 0 : direction * 88,
-    opacity: reduced ? 0 : 0.58,
-    scale: reduced ? 1 : 0.985
+    x: reduced ? 0 : `${direction * 100}%`,
+    opacity: reduced ? 0 : 1
   }),
-  center: { x: 0, opacity: 1, scale: 1 },
+  center: { x: 0, opacity: 1 },
   exit: ({ direction, reduced }: CardTransition) => ({
-    x: reduced ? 0 : direction * -88,
-    opacity: 0,
-    scale: reduced ? 1 : 0.985
+    x: reduced ? 0 : `${direction * -100}%`,
+    opacity: reduced ? 0 : 1
   })
 };
 
@@ -149,7 +147,7 @@ export function VocabularyStudyPage() {
 
       <section className="study-deck" aria-label="Vocabulary flashcards">
         <div className="study-card-stack" aria-hidden="true" />
-        <AnimatePresence initial={false} custom={cardTransition} mode="popLayout">
+        <AnimatePresence initial={false} custom={cardTransition}>
           <motion.div
             className="study-card-motion"
             key={entry.id}
@@ -159,14 +157,13 @@ export function VocabularyStudyPage() {
             animate="center"
             exit="exit"
             transition={reduceMotion
-              ? { duration: 0.14 }
-              : { type: "spring", stiffness: 400, damping: 40, mass: 1, velocity: cardTransition.velocity }}
+              ? { duration: 0.12 }
+              : { type: "spring", stiffness: 520, damping: 52, mass: 1, velocity: cardTransition.velocity }}
             drag={reduceMotion ? false : "x"}
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={{ left: index < vocabulary.length - 1 ? 0.64 : 0.12, right: index > 0 ? 0.64 : 0.12 }}
             dragMomentum={false}
             dragDirectionLock
-            whileDrag={reduceMotion ? undefined : { scale: 0.985, opacity: 0.88 }}
             onDragEnd={(_, info) => {
               const projected = projectedSwipeOffset(info.offset.x, info.velocity.x);
               if (projected <= -SWIPE_THRESHOLD) move(1, info.velocity.x);
