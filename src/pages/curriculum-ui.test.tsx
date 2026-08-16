@@ -6,12 +6,13 @@ import { LanguagePackProvider } from "../languages/LanguagePackContext";
 import { japanesePack } from "../languages/ja/japanese";
 import { db } from "../storage/db";
 import { PhraseKitPage } from "./PhraseKitPage";
+import { QuizPage } from "./QuizPage";
 import { TopicPage } from "./TopicPage";
 import { TopicsPage } from "./TopicsPage";
 
 afterEach(async () => {
   cleanup();
-  await Promise.all([db.preferences.clear(), db.tierProgress.clear()]);
+  await Promise.all([db.preferences.clear(), db.tierProgress.clear(), db.attempts.clear(), db.sessions.clear(), db.mastery.clear(), db.studyProgress.clear()]);
 });
 
 const renderWithState = (node: React.ReactNode) => render(<AppStateProvider><LanguagePackProvider pack={japanesePack}>{node}</LanguagePackProvider></AppStateProvider>);
@@ -48,15 +49,31 @@ describe("trip-based curriculum UI", () => {
     const words = screen.getByRole("heading", { name: "Scene vocabulary" });
     const dialogue = screen.getByRole("heading", { name: "Dialogue in context" });
     const scenes = screen.getByRole("heading", { name: "What this scene prepares you to do" });
-    const checkpoint = screen.getByRole("heading", { name: "4-step topic checkpoint" });
     expect(words.compareDocumentPosition(dialogue) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(dialogue.compareDocumentPosition(scenes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(scenes.compareDocumentPosition(checkpoint) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "4-step topic checkpoint" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "Checkpoint" }));
+    expect(await screen.findByRole("heading", { name: "4-step topic checkpoint" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Scene vocabulary" })).not.toBeInTheDocument();
   });
 
   it("links the essential phrase kit to immersive study", () => {
     renderWithState(<MemoryRouter><PhraseKitPage /></MemoryRouter>);
     expect(screen.getByRole("link", { name: "Quick study · 12" })).toHaveAttribute("href", "/ja/phrases/study?mode=focus");
     expect(screen.getByRole("link", { name: "Browse all 40" })).toHaveAttribute("href", "/ja/phrases/study?mode=all");
+    fireEvent.click(screen.getByRole("link", { name: "Practice & quiz" }));
+    expect(screen.getByRole("heading", { name: "Study one phrase at a time" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Start quiz" })).toHaveAttribute("href", "/ja/phrases/quiz");
+  });
+
+  it("opens an essential-phrase quiz with the shared vocabulary pool", async () => {
+    renderWithState(
+      <MemoryRouter initialEntries={["/ja/phrases/quiz"]}>
+        <Routes><Route path="/ja/phrases/quiz" element={<QuizPage source="phrases" />} /></Routes>
+      </MemoryRouter>
+    );
+    expect(await screen.findByRole("heading", { level: 1, name: "Essential phrases · Japanese" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Japanese answer" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Leave quiz" })).toHaveAttribute("href", "/ja/phrases?tab=practice");
   });
 });

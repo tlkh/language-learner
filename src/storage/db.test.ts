@@ -54,8 +54,8 @@ afterEach(async () => {
 
 describe("language-scoped device progress", () => {
   it("opens the modular IndexedDB schema", () => {
-    expect(db.verno).toBe(5);
-    expect(db.tables.map((table) => table.name)).toEqual(expect.arrayContaining(["characterSessions", "characterAttempts", "characterMastery"]));
+    expect(db.verno).toBe(6);
+    expect(db.tables.map((table) => table.name)).toEqual(expect.arrayContaining(["studyProgress", "characterSessions", "characterAttempts", "characterMastery"]));
   });
 
   it("atomically records a scoped attempt, confidence, and resumable position", async () => {

@@ -38,6 +38,12 @@ describe("grapheme-aware answer grading", () => {
     expect(result.diff.some((part) => part.kind !== "same")).toBe(true);
   });
 
+  it("keeps the remainder aligned after a missing character", () => {
+    const question = makeQuestion({ canonicalAnswer: "takushii noriba", acceptedAnswers: ["takushii noriba"], answerLanguage: "en" });
+    const result = japanesePack.quiz.grade(question, "takushi noriba");
+    expect(result.diff.filter((part) => part.kind !== "same")).toEqual([{ value: "i", kind: "missing" }]);
+  });
+
   it("does not globally reject Latin target answers", () => {
     const question = makeQuestion({ languageCode: "id", canonicalAnswer: "selamat", acceptedAnswers: ["selamat"], answerLanguage: "id" });
     expect(gradeQuestion(question, "Selamat", (value) => value.trim().toLocaleLowerCase("id"), "id").status).toBe("correct");
@@ -62,6 +68,14 @@ describe("pack-owned quiz generation", () => {
     const mastery = Object.fromEntries(domain.slice(0, 70).map((entry) => [entry.masteryKey, 5]));
     const generated = japanesePack.quiz.generate(topic, { languageCode: "ja", topicId: topic.id, tierId: "script-recall", variantId: "formal", seed: 9, mastery });
     expect(generated.filter((item) => mastery[item.sourceId] === undefined).length).toBeGreaterThan(0);
+  });
+
+  it("does not repeat correctly answered questions while enough unanswered questions remain", () => {
+    const options = { languageCode: "ja", topicId: topic.id, tierId: "script-recall", variantId: "formal", seed: 19 };
+    const first = japanesePack.quiz.generate(topic, options);
+    const second = japanesePack.quiz.generate(topic, { ...options, correctQuestionIds: new Set(first.map((question) => question.id)) });
+    expect(second).toHaveLength(24);
+    expect(second.some((question) => first.some((answered) => answered.id === question.id))).toBe(false);
   });
 
   it("replaces only unanswered questions when the speech variant changes", () => {

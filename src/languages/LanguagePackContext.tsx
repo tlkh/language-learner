@@ -14,6 +14,8 @@ interface LanguagePackContextValue {
   dismissWelcome: () => void;
   characterCalloutDismissed: boolean;
   dismissCharacterCallout: () => void;
+  safetyKitDismissed: boolean;
+  dismissSafetyKit: () => void;
 }
 
 const LanguagePackContext = createContext<LanguagePackContextValue | null>(null);
@@ -73,7 +75,9 @@ export function LanguagePackProvider({ pack, children }: PropsWithChildren<{ pac
     welcomeDismissed: Boolean(appState.welcomeDismissedByLanguage[pack.code]),
     dismissWelcome: () => appState.dismissWelcome(pack.code),
     characterCalloutDismissed: Boolean(appState.characterCalloutDismissedByLanguage[pack.code]),
-    dismissCharacterCallout: () => appState.dismissCharacterCallout(pack.code)
+    dismissCharacterCallout: () => appState.dismissCharacterCallout(pack.code),
+    safetyKitDismissed: Boolean(appState.safetyKitDismissedByLanguage[pack.code]),
+    dismissSafetyKit: () => appState.dismissSafetyKit(pack.code)
   };
 
   return <LanguagePackContext.Provider value={value}>{children}</LanguagePackContext.Provider>;

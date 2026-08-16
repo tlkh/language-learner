@@ -11,6 +11,7 @@ import { LanguagePackProvider, LanguagePackRoute } from "./LanguagePackContext";
 const pwaState = vi.hoisted(() => ({
   checkForUpdate: vi.fn(() => Promise.resolve()),
   needRefresh: false,
+  online: true,
   update: vi.fn(() => Promise.resolve())
 }));
 
@@ -21,10 +22,10 @@ afterEach(() => { cleanup(); localStorage.clear(); vi.clearAllMocks(); });
 const state = (children: React.ReactNode) => <AppStateProvider>{children}</AppStateProvider>;
 
 describe("language routing and navigation", () => {
-  it("always shows the selector at the root, even when a language was opened before", () => {
+  it("always shows the selector at the root, even when a language was opened before", async () => {
     localStorage.setItem("ll-last-language", "ja");
     render(state(<MemoryRouter initialEntries={["/"]}><LanguageSelectorPage /></MemoryRouter>));
-    expect(screen.getByRole("heading", { name: "Choose what you’re learning" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Choose what you’re learning" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Last opened/ })).toHaveAttribute("href", "/ja/learn");
   });
 

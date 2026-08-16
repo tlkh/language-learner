@@ -222,7 +222,8 @@ export function generateQuiz(topic: Topic, options: GenerateQuizOptions): QuizQu
   return selectSceneBalancedQuestions(candidates, {
     count,
     seed: options.seed,
-    mastery: options.mastery
+    mastery: options.mastery,
+    correctQuestionIds: options.correctQuestionIds
   });
 }
 

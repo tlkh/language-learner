@@ -31,7 +31,7 @@ const renderPhraseStudy = (search = "") => render(
 afterEach(async () => {
   cleanup();
   localStorage.clear();
-  await Promise.all([db.mastery.clear(), db.preferences.clear()]);
+  await Promise.all([db.mastery.clear(), db.preferences.clear(), db.studyProgress.clear()]);
 });
 
 describe("focused vocabulary study", () => {
@@ -96,8 +96,9 @@ describe("focused vocabulary study", () => {
     expect(card.querySelectorAll(".study-card__face")).toHaveLength(1);
     expect(card.querySelector(".study-card__face--front")).toBeInTheDocument();
     fireEvent.click(card);
-    expect(card.querySelectorAll(".study-card__face")).toHaveLength(1);
-    expect(card.querySelector(".study-card__face--front")).not.toBeInTheDocument();
+    const flippedCard = await screen.findByRole("button", { name: /Translation side for 軍用機/ });
+    expect(flippedCard.querySelectorAll(".study-card__face")).toHaveLength(1);
+    expect(flippedCard.querySelector(".study-card__face--front")).not.toBeInTheDocument();
   });
 });
 
@@ -123,7 +124,7 @@ describe("browse-all vocabulary study", () => {
     renderPhraseStudy("?mode=all");
     expect(screen.getByRole("heading", { name: "Essential Phrase Kit" })).toBeInTheDocument();
     expect(screen.getByLabelText("Card 1 of 40")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Close vocabulary study" })).toHaveAttribute("href", "/ja/phrases");
+    expect(screen.getByRole("link", { name: "Close vocabulary study" })).toHaveAttribute("href", "/ja/phrases?tab=practice");
   });
 
   it("projects flick velocity into the swipe decision", () => {

@@ -57,5 +57,5 @@ const patternQuestions = (topic: Topic, tierId: QuizTierId): QuizQuestion[] => {
 export function generateQuiz(topic: Topic, options: GenerateQuizOptions): QuizQuestion[] {
   const count = options.count ?? QUIZ_SIZE;
   const candidates = options.tierId === "pronunciation-recall" || options.tierId === "word-recall" ? domainVocabulary(topic).map((entry) => vocabularyQuestion(topic, entry, options.tierId)) : patternQuestions(topic, options.tierId);
-  return selectSceneBalancedQuestions(candidates, { count, seed: options.seed, mastery: options.mastery });
+  return selectSceneBalancedQuestions(candidates, { count, seed: options.seed, mastery: options.mastery, correctQuestionIds: options.correctQuestionIds });
 }

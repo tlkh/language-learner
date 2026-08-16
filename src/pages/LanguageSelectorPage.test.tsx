@@ -6,7 +6,8 @@ import { LanguageSelectorPage } from "./LanguageSelectorPage";
 const pwaState = vi.hoisted(() => ({
   checkForUpdate: vi.fn<() => Promise<void>>(() => Promise.resolve()),
   needRefresh: false as boolean,
-  update: vi.fn<() => Promise<void>>(() => Promise.resolve())
+  update: vi.fn<() => Promise<void>>(() => Promise.resolve()),
+  online: true
 }));
 
 vi.mock("../pwa/PwaState", () => ({ usePwaState: () => pwaState }));
@@ -36,11 +37,11 @@ describe("Language selector update gate", () => {
     pwaState.needRefresh = true;
     renderSelector();
 
-    expect(screen.getByRole("heading", { name: "A new version is ready" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "A new version is ready" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Installed language packs" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Japanese/ })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Update and continue" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Update and continue" }));
     await waitFor(() => expect(pwaState.update).toHaveBeenCalledTimes(1));
     expect(screen.getByRole("button", { name: "Updating…" })).toBeDisabled();
   });
@@ -50,10 +51,20 @@ describe("Language selector update gate", () => {
     pwaState.update.mockRejectedValueOnce(new Error("offline"));
     renderSelector();
 
-    fireEvent.click(screen.getByRole("button", { name: "Update and continue" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Update and continue" }));
 
     expect(await screen.findByText("The update could not be applied. Check your connection and try again.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try update again" })).toBeEnabled();
     expect(screen.queryByRole("link", { name: /Japanese/ })).not.toBeInTheDocument();
+  });
+
+  it("does not expose language links when an online update check fails", async () => {
+    pwaState.checkForUpdate.mockRejectedValueOnce(new Error("network"));
+    renderSelector();
+
+    expect(await screen.findByRole("heading", { name: "Couldn’t verify this version" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Japanese/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Check again" }));
+    expect(await screen.findByRole("heading", { name: "Choose what you’re learning" })).toBeInTheDocument();
   });
 });

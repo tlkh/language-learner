@@ -80,6 +80,7 @@ export default function App() {
                 <Route path="topics" element={<TopicsPage />} />
                 <Route path="phrases" element={<PhraseKitPage />} />
                 <Route path="phrases/study" element={<VocabularyStudyPage source="phrases" />} />
+                <Route path="phrases/quiz" element={<QuizPage source="phrases" />} />
                 <Route path="topic/:topicId" element={<TopicPage />} />
                 <Route path="topic/:topicId/scene/:sceneId" element={<TopicPage />} />
                 <Route path="topic/:topicId/study" element={<VocabularyStudyPage />} />

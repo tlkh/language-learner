@@ -77,5 +77,5 @@ export function generateQuiz(topic: Topic, options: GenerateQuizOptions): QuizQu
   const candidates = options.tierId === "pronunciation-recall" || options.tierId === "word-recall"
     ? domainVocabulary(topic).map((entry) => vocabularyQuestion(topic, entry, options.tierId))
     : patternQuestions(topic, options.tierId);
-  return selectSceneBalancedQuestions(candidates, { count, seed: options.seed, mastery: options.mastery });
+  return selectSceneBalancedQuestions(candidates, { count, seed: options.seed, mastery: options.mastery, correctQuestionIds: options.correctQuestionIds });
 }

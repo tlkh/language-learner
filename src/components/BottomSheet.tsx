@@ -48,10 +48,10 @@ export function BottomSheet({ open, title, onClose, children }: BottomSheetProps
         >
           <div className="bottom-sheet__handle" aria-hidden="true" />
           <header className="bottom-sheet__header">
-            <h2 id="sheet-title">{title}</h2>
             <button type="button" className="icon-button" onClick={onClose} aria-label="Close sheet">
               <X aria-hidden="true" />
             </button>
+            <h2 id="sheet-title">{title}</h2>
           </header>
           <div className="bottom-sheet__content">{children}</div>
         </motion.dialog>

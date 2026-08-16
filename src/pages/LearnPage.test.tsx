@@ -136,7 +136,7 @@ describe("Learn page", () => {
 
     expect(screen.getByRole("heading", { name: "Safety kit" })).toBeInTheDocument();
     expect(screen.queryByText("Food restrictions, weather warnings, and urgent help stay open without prerequisites."))
-      .not.toBeInTheDocument();
+      .toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Learn Kana" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Dismiss Learn Kana card" }));
 
@@ -153,5 +153,17 @@ describe("Learn page", () => {
     cleanup();
     renderLearnPage();
     expect(screen.queryByRole("heading", { name: "Learn Kana" })).not.toBeInTheDocument();
+  });
+
+  it("dismisses the safety kit and keeps it dismissed for this language", async () => {
+    localStorage.setItem("ll-welcome-by-language", JSON.stringify({ ja: true }));
+    renderLearnPage();
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss Safety kit" }));
+    expect(screen.queryByRole("heading", { name: "Safety kit" })).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem("ll-safety-kit-by-language") ?? "{}")).toEqual({ ja: true });
+    await waitFor(async () => {
+      await expect(db.preferences.get("language:ja:safetyKitDismissed")).resolves.toMatchObject({ value: "true" });
+    });
   });
 });

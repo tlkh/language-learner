@@ -2,7 +2,9 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { BarChart3, BookCheck, BookOpenCheck, Brain, Check, Languages, Target, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ScreenHeader } from "../components/ScreenHeader";
+import { ProgressFill } from "../components/ProgressFill";
 import { useLanguagePack } from "../languages/LanguagePackContext";
+import { buildPhraseQuizTopic, getPhraseQuizTier } from "../quiz/phrases";
 import { aggregateStats, db } from "../storage/db";
 
 const accuracyLabel = (correct: number, attempts: number) =>
@@ -13,13 +15,14 @@ export function ProgressPage() {
   const base = `/${pack.code}`;
   const vocabularyIds = new Set(indexes.vocabulary.keys());
   const data = useLiveQuery(async () => {
-    const [stats, tiers, attempts, characterMastery] = await Promise.all([
+    const [stats, tiers, attempts, characterMastery, studyProgress] = await Promise.all([
       aggregateStats(pack.code, vocabularyIds),
       db.tierProgress.where("languageCode").equals(pack.code).toArray(),
       db.attempts.where("languageCode").equals(pack.code).reverse().sortBy("answeredAt"),
-      db.characterMastery.where("languageCode").equals(pack.code).toArray()
+      db.characterMastery.where("languageCode").equals(pack.code).toArray(),
+      db.studyProgress.where("languageCode").equals(pack.code).toArray()
     ]);
-    return { stats, tiers, attempts: attempts.slice(0, 100), characterMastery };
+    return { stats, tiers, attempts, characterMastery, studyProgress };
   }, [pack.code]);
   const stats = data?.stats ?? { mastered: 0, seen: 0, correct: 0, attempts: 0, passedTiers: 0, completedSessions: 0, recentAttempts: 0 };
   const accuracy = stats.attempts ? Math.round((stats.correct / stats.attempts) * 100) : 0;
@@ -36,7 +39,34 @@ export function ProgressPage() {
   });
   const masteredCharacters = data?.characterMastery.filter((item) => item.mastered).length ?? 0;
   const practicedCharacters = data?.characterMastery.length ?? 0;
-  const isFirstSession = data !== undefined && stats.attempts === 0;
+  const studiedSourceIds = new Set(data?.studyProgress.map((record) => record.sourceId) ?? []);
+  const studyTotal = indexes.vocabulary.size;
+  const correctQuestionIds = new Set((data?.attempts ?? []).filter((attempt) => attempt.variantId === variantId && attempt.correct).map((attempt) => attempt.questionId));
+  const checkpointCoverageByTopic = new Map(pack.topics.map((topic) => {
+    const pools = topic.quizTierIds.flatMap((tierId) => pack.quiz.generate(topic, {
+      languageCode: pack.code,
+      topicId: topic.id,
+      tierId,
+      variantId,
+      seed: 0,
+      count: Number.MAX_SAFE_INTEGER
+    }));
+    return [topic.id, { completed: pools.filter((question) => correctQuestionIds.has(question.id)).length, total: pools.length }] as const;
+  }));
+  const phraseTopic = buildPhraseQuizTopic(pack);
+  const phraseTier = getPhraseQuizTier(pack);
+  const phrasePool = phraseTopic && phraseTier ? pack.quiz.generate(phraseTopic, {
+    languageCode: pack.code,
+    topicId: phraseTopic.id,
+    tierId: phraseTier.id,
+    variantId,
+    seed: 0,
+    count: Number.MAX_SAFE_INTEGER
+  }) : [];
+  const checkpointCompleted = [...checkpointCoverageByTopic.values()].reduce((sum, item) => sum + item.completed, 0)
+    + phrasePool.filter((question) => correctQuestionIds.has(question.id)).length;
+  const checkpointTotal = [...checkpointCoverageByTopic.values()].reduce((sum, item) => sum + item.total, 0) + phrasePool.length;
+  const isFirstSession = data !== undefined && stats.attempts === 0 && studiedSourceIds.size === 0;
   const startTopic = indexes.topics.get(pack.presentation.startTopicId);
 
   return (
@@ -49,19 +79,34 @@ export function ProgressPage() {
           <BookOpenCheck aria-hidden="true" />
           <div>
             <span className="quiet-label">Nothing to measure yet</span>
-            <h2 id="progress-empty-title">Your learning record starts with a checkpoint</h2>
-            <p>Answer your first quiz question and this page will begin showing recall, accuracy, and topic readiness—without streaks or daily pressure.</p>
+            <h2 id="progress-empty-title">Your learning record starts with one card</h2>
+            <p>Open quick study or answer a checkpoint question and this page will begin showing coverage, recall, and topic readiness—without streaks or daily pressure.</p>
           </div>
           {startTopic ? <Link className="button" to={`${base}/topic/${startTopic.id}`}>Open {startTopic.shortTitle}</Link> : null}
         </section>
       ) : (
         <section className="stats-grid" aria-label="Learning statistics">
+          <article><BookOpenCheck aria-hidden="true" /><strong>{studiedSourceIds.size}</strong><span>words studied</span><small>of {studyTotal} total</small></article>
           <article><Brain aria-hidden="true" /><strong>{stats.mastered}</strong><span>words mastered</span><small>{stats.seen} seen</small></article>
           <article><Target aria-hidden="true" /><strong>{accuracy}%</strong><span>answer accuracy</span><small>{stats.attempts} answers</small></article>
-          <article><BookCheck aria-hidden="true" /><strong>{stats.passedTiers}</strong><span>tiers passed</span><small>of {pack.topics.length * pack.quiz.tiers.length * pack.speechVariants.length} total</small></article>
+          <article><BookCheck aria-hidden="true" /><strong>{stats.passedTiers}</strong><span>steps passed</span><small>of {pack.topics.length * pack.quiz.tiers.length * pack.speechVariants.length + (phrasePool.length ? 1 : 0)} total</small></article>
           <article><BarChart3 aria-hidden="true" /><strong>{stats.recentAttempts}</strong><span>answers in 30 days</span><small>{stats.completedSessions} sessions total</small></article>
         </section>
       )}
+
+      <section className="coverage-section" aria-labelledby="coverage-title">
+        <div className="section-heading"><div><h2 id="coverage-title">Overall completion</h2><p>Quick study tracks first exposure; checkpoints track every unique question answered correctly.</p></div></div>
+        <div className="coverage-grid">
+          <article>
+            <div><BookOpenCheck aria-hidden="true" /><span><strong>Quick study</strong><small>{studiedSourceIds.size} of {studyTotal} words shown</small></span><b>{studyTotal ? Math.round((studiedSourceIds.size / studyTotal) * 100) : 0}%</b></div>
+            <span className="coverage-track" role="progressbar" aria-label="Quick study completion" aria-valuemin={0} aria-valuemax={studyTotal} aria-valuenow={studiedSourceIds.size}><ProgressFill value={studyTotal ? studiedSourceIds.size / studyTotal : 0} /></span>
+          </article>
+          <article>
+            <div><Target aria-hidden="true" /><span><strong>Checkpoint questions</strong><small>{checkpointCompleted} of {checkpointTotal} answered correctly</small></span><b>{checkpointTotal ? Math.round((checkpointCompleted / checkpointTotal) * 100) : 0}%</b></div>
+            <span className="coverage-track" role="progressbar" aria-label="Checkpoint completion" aria-valuemin={0} aria-valuemax={checkpointTotal} aria-valuenow={checkpointCompleted}><ProgressFill value={checkpointTotal ? checkpointCompleted / checkpointTotal : 0} /></span>
+          </article>
+        </div>
+      </section>
 
       <section className="character-progress-panel" aria-labelledby="character-progress-title">
         <Languages aria-hidden="true" />
@@ -98,7 +143,8 @@ export function ProgressPage() {
             const topic = indexes.topics.get(topicId);
             if (!topic) return null;
             const passed = passedByTopic.get(topic.id) ?? 0;
-            return <li key={topic.id}><Link to={`${base}/topic/${topic.id}`}><span><strong>{topic.shortTitle}</strong><small>{passed ? `${passed} of ${topic.quizTierIds.length} tiers passed` : "Not started"}</small></span><span className="readiness-dots" aria-label={`${passed} of ${topic.quizTierIds.length} tiers passed`}>{topic.quizTierIds.map((id, index) => <i className={index < passed ? "is-filled" : undefined} key={id} />)}</span></Link></li>;
+            const coverage = checkpointCoverageByTopic.get(topic.id) ?? { completed: 0, total: 0 };
+            return <li key={topic.id}><Link to={`${base}/topic/${topic.id}?tab=checkpoint`}><span><strong>{topic.shortTitle}</strong><small>{coverage.completed} of {coverage.total} questions · {passed} of {topic.quizTierIds.length} steps passed</small></span><span className="readiness-dots" aria-label={`${passed} of ${topic.quizTierIds.length} tiers passed`}>{topic.quizTierIds.map((id, index) => <i className={index < passed ? "is-filled" : undefined} key={id} />)}</span></Link></li>;
           })}</ul></section>)}
         </div>
       </details>

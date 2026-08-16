@@ -177,6 +177,7 @@ export interface GenerateQuizOptions {
   seed: number;
   count?: number;
   mastery?: Record<string, number>;
+  correctQuestionIds?: ReadonlySet<string>;
 }
 
 export interface CharacterItem {

@@ -43,3 +43,26 @@ for (const width of [320, 375, 414, 768]) {
     expect(overflow).toBeLessThanOrEqual(0);
   });
 }
+
+test("topic navigation keeps the leading back control and both sections inside a narrow phone", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto("/#/ja/topic/directions-navigation");
+  await expect(page.getByRole("heading", { level: 1, name: "Directions & Navigation" })).toBeVisible();
+  const back = await page.getByRole("link", { name: "Back to topics" }).boundingBox();
+  expect(back?.x).toBeLessThan(40);
+  await page.getByRole("link", { name: "Checkpoint" }).click();
+  await expect(page.getByRole("heading", { name: "4-step topic checkpoint" })).toBeVisible();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test("quiz submit controls remain visible in a short phone viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 600 });
+  await page.goto("/#/ja/topic/directions-navigation/quiz/romaji-recall");
+  const input = page.getByRole("textbox", { name: "Romaji answer" });
+  await input.focus();
+  const submit = page.getByRole("button", { name: "Check answer" });
+  await expect(submit).toBeVisible();
+  const bounds = await submit.boundingBox();
+  expect((bounds?.y ?? 600) + (bounds?.height ?? 0)).toBeLessThanOrEqual(600);
+});

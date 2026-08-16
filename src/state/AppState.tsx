@@ -8,6 +8,8 @@ interface AppStateValue {
   dismissWelcome: (languageCode: string) => void;
   characterCalloutDismissedByLanguage: Record<string, boolean>;
   dismissCharacterCallout: (languageCode: string) => void;
+  safetyKitDismissedByLanguage: Record<string, boolean>;
+  dismissSafetyKit: (languageCode: string) => void;
 }
 
 const AppStateContext = createContext<AppStateValue | null>(null);
@@ -41,6 +43,9 @@ export function AppStateProvider({ children }: PropsWithChildren) {
   const [characterCalloutDismissedByLanguage, setCharacterCalloutDismissedByLanguage] = useState<
     Record<string, boolean>
   >(() => readStoredMap<boolean>("ll-character-callout-by-language"));
+  const [safetyKitDismissedByLanguage, setSafetyKitDismissedByLanguage] = useState<Record<string, boolean>>(
+    () => readStoredMap<boolean>("ll-safety-kit-by-language")
+  );
 
   useEffect(() => {
     const query = matchMedia("(prefers-color-scheme: dark)");
@@ -77,8 +82,17 @@ export function AppStateProvider({ children }: PropsWithChildren) {
         return next;
       });
       void db.preferences.put({ key: `language:${languageCode}:characterCalloutDismissed`, value: "true" });
+    },
+    safetyKitDismissedByLanguage,
+    dismissSafetyKit: (languageCode) => {
+      setSafetyKitDismissedByLanguage((current) => {
+        const next = { ...current, [languageCode]: true };
+        localStorage.setItem("ll-safety-kit-by-language", JSON.stringify(next));
+        return next;
+      });
+      void db.preferences.put({ key: `language:${languageCode}:safetyKitDismissed`, value: "true" });
     }
-  }), [characterCalloutDismissedByLanguage, speechVariantByLanguage, welcomeDismissedByLanguage]);
+  }), [characterCalloutDismissedByLanguage, safetyKitDismissedByLanguage, speechVariantByLanguage, welcomeDismissedByLanguage]);
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
 }

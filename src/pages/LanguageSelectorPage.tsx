@@ -6,16 +6,41 @@ import { usePwaState } from "../pwa/PwaState";
 
 export function LanguageSelectorPage() {
   const [searchParams] = useSearchParams();
-  const { checkForUpdate, needRefresh, update } = usePwaState();
+  const { checkForUpdate, needRefresh, online, update } = usePwaState();
   const [updating, setUpdating] = useState(false);
   const [updateFailed, setUpdateFailed] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(true);
+  const [checkFailed, setCheckFailed] = useState(false);
   const unknown = searchParams.get("unknown");
   const failed = searchParams.get("error");
   const lastLanguage = localStorage.getItem("ll-last-language");
 
   useEffect(() => {
-    void checkForUpdate().catch(() => undefined);
+    let cancelled = false;
+    void checkForUpdate()
+      .then(() => {
+        if (!cancelled) setCheckingUpdate(false);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCheckingUpdate(false);
+          setCheckFailed(true);
+        }
+      });
+    return () => { cancelled = true; };
   }, [checkForUpdate]);
+
+  const retryUpdateCheck = async () => {
+    setCheckingUpdate(true);
+    setCheckFailed(false);
+    try {
+      await checkForUpdate();
+    } catch {
+      setCheckFailed(true);
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
 
   const applyRequiredUpdate = async () => {
     setUpdating(true);
@@ -27,6 +52,33 @@ export function LanguageSelectorPage() {
       setUpdateFailed(true);
     }
   };
+
+  if (checkingUpdate) {
+    return (
+      <main className="language-selector-page language-selector-page--update" id="main-content">
+        <section className="required-update" role="status" aria-labelledby="update-check-title">
+          <span className="required-update__mark"><RefreshCw className="is-spinning" aria-hidden="true" /></span>
+          <p className="quiet-label">Version check</p>
+          <h1 id="update-check-title">Checking for updates</h1>
+          <p>Language selection will open as soon as the installed lessons are verified.</p>
+        </section>
+      </main>
+    );
+  }
+
+  if (checkFailed && online) {
+    return (
+      <main className="language-selector-page language-selector-page--update" id="main-content">
+        <section className="required-update" role="alert" aria-labelledby="update-check-failed-title">
+          <span className="required-update__mark"><RefreshCw aria-hidden="true" /></span>
+          <p className="quiet-label">Update check required</p>
+          <h1 id="update-check-failed-title">Couldn’t verify this version</h1>
+          <p>Check your connection and retry before choosing a language.</p>
+          <button className="button" type="button" onClick={() => void retryUpdateCheck()}><RefreshCw aria-hidden="true" /> Check again</button>
+        </section>
+      </main>
+    );
+  }
 
   if (needRefresh) {
     return (
@@ -63,6 +115,7 @@ export function LanguageSelectorPage() {
 
       {unknown ? <p className="inline-status is-error">“{unknown}” is not an installed language pack.</p> : null}
       {failed ? <p className="inline-status is-error">The {failed} language pack could not be loaded.</p> : null}
+      {checkFailed ? <p className="inline-status">Offline: using the latest version already saved on this device.</p> : null}
 
       <section className="language-card-grid" aria-label="Installed language packs">
         {languageCatalog.map((language) => (

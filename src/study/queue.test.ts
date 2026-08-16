@@ -74,4 +74,11 @@ describe("focused study queue selection", () => {
     expect(selectStudyQueue(vocabulary, signals).map((entry) => entry.id))
       .toEqual(["first", "second", "third"]);
   });
+
+  it("returns only never-shown cards until the whole scope has been seen", () => {
+    const vocabulary = [vocabularyEntry("seen-a"), vocabularyEntry("new-a"), vocabularyEntry("seen-b"), vocabularyEntry("new-b")];
+    const shown = new Set(["seen-a", "seen-b"]);
+    expect(selectStudyQueue(vocabulary, new Map(), 12, shown).map((entry) => entry.id)).toEqual(["new-a", "new-b"]);
+    expect(selectStudyQueue(vocabulary, new Map(), 2, new Set(vocabulary.map((entry) => entry.id)))).toHaveLength(2);
+  });
 });

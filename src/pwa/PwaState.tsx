@@ -14,7 +14,7 @@ interface PwaStateValue {
   canInstall: boolean;
   isIos: boolean;
   install: () => Promise<boolean>;
-  checkForUpdate: () => Promise<void>;
+  checkForUpdate: () => Promise<boolean>;
   update: () => Promise<void>;
   dismissUpdate: () => void;
 }
@@ -40,7 +40,10 @@ export function PwaStateProvider({ children }: PropsWithChildren) {
   const checkForUpdate = useCallback(async () => {
     const registration = await checkForAppUpdate(registrationRef.current);
     if (registration) registrationRef.current = registration;
-  }, []);
+    const required = Boolean(registration?.waiting);
+    if (required) setNeedRefresh(true);
+    return required;
+  }, [setNeedRefresh]);
 
   useEffect(() => {
     const onOnline = () => setOnline(true);

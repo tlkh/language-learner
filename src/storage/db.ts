@@ -67,6 +67,18 @@ export interface TierProgressRecord {
   completedAt?: number;
 }
 
+export interface StudyProgressRecord {
+  id: string;
+  languageCode: LanguageCode;
+  scopeId: string;
+  sourceId: string;
+  shownCount: number;
+  recalled: number;
+  unresolved: number;
+  firstShownAt: number;
+  updatedAt: number;
+}
+
 export interface CharacterSessionItemState {
   itemId: string;
   attempted: boolean;
@@ -122,6 +134,7 @@ export class LanguageLearnerDatabase extends Dexie {
   attempts!: EntityTable<AttemptRecord, "id">;
   sessions!: EntityTable<QuizSessionRecord, "id">;
   tierProgress!: EntityTable<TierProgressRecord, "id">;
+  studyProgress!: EntityTable<StudyProgressRecord, "id">;
   characterSessions!: EntityTable<CharacterSessionRecord, "id">;
   characterAttempts!: EntityTable<CharacterAttemptRecord, "id">;
   characterMastery!: EntityTable<CharacterMasteryRecord, "id">;
@@ -153,6 +166,17 @@ export class LanguageLearnerDatabase extends Dexie {
       ]);
       await transaction.table("preferences").put({ key: MODULAR_PROGRESS_RESET_KEY, value: "1" });
     });
+    this.version(6).stores({
+      preferences: "&key",
+      mastery: "&id, languageCode, topicId, sourceId, tierId, variantId, [languageCode+topicId+tierId+variantId], [languageCode+sourceId+tierId+variantId], confidence, updatedAt",
+      attempts: "++id, sessionId, languageCode, topicId, sourceId, tierId, variantId, answeredAt",
+      sessions: "&id, languageCode, topicId, tierId, variantId, [languageCode+topicId+tierId+variantId], updatedAt",
+      tierProgress: "&id, languageCode, topicId, tierId, variantId, [languageCode+topicId+tierId+variantId], passed, bestScore",
+      studyProgress: "&id, languageCode, scopeId, sourceId, [languageCode+scopeId], [languageCode+sourceId], updatedAt",
+      characterSessions: "&id, languageCode, courseId, drillModeId, [languageCode+courseId+drillModeId], updatedAt",
+      characterAttempts: "++id, sessionId, languageCode, courseId, drillModeId, itemId, answeredAt",
+      characterMastery: "&id, languageCode, courseId, drillModeId, itemId, [languageCode+courseId+drillModeId], mastered, updatedAt"
+    });
   }
 }
 
@@ -173,6 +197,52 @@ export const tierProgressId = (
   variantId: SpeechVariantId
 ) => `${languageCode}:${topicId}:${tierId}:${variantId}`;
 
+export const studyProgressId = (languageCode: LanguageCode, scopeId: string, sourceId: string) =>
+  `${languageCode}:${scopeId}:${sourceId}`;
+
+export async function recordStudyCardShown(languageCode: LanguageCode, scopeId: string, sourceId: string) {
+  const id = studyProgressId(languageCode, scopeId, sourceId);
+  const now = Date.now();
+  await db.transaction("rw", db.studyProgress, async () => {
+    const current = await db.studyProgress.get(id);
+    await db.studyProgress.put({
+      id,
+      languageCode,
+      scopeId,
+      sourceId,
+      shownCount: (current?.shownCount ?? 0) + 1,
+      recalled: current?.recalled ?? 0,
+      unresolved: current?.unresolved ?? 0,
+      firstShownAt: current?.firstShownAt ?? now,
+      updatedAt: now
+    });
+  });
+}
+
+export async function recordStudyOutcome(
+  languageCode: LanguageCode,
+  scopeId: string,
+  sourceId: string,
+  outcome: "recalled" | "unresolved"
+) {
+  const id = studyProgressId(languageCode, scopeId, sourceId);
+  const now = Date.now();
+  await db.transaction("rw", db.studyProgress, async () => {
+    const current = await db.studyProgress.get(id);
+    await db.studyProgress.put({
+      id,
+      languageCode,
+      scopeId,
+      sourceId,
+      shownCount: Math.max(1, current?.shownCount ?? 0),
+      recalled: (current?.recalled ?? 0) + (outcome === "recalled" ? 1 : 0),
+      unresolved: (current?.unresolved ?? 0) + (outcome === "unresolved" ? 1 : 0),
+      firstShownAt: current?.firstShownAt ?? now,
+      updatedAt: now
+    });
+  });
+}
+
 export async function getMasteryMap(
   languageCode: LanguageCode,
   topicId: string,
@@ -184,6 +254,20 @@ export async function getMasteryMap(
     db.mastery.where("[languageCode+topicId+tierId+variantId]").equals([languageCode, SHARED_MASTERY_TOPIC_ID, tierId, variantId]).toArray()
   ]);
   return Object.fromEntries([...topicRecords, ...sharedRecords].map((record) => [record.sourceId, record.confidence]));
+}
+
+export async function getCorrectQuestionIds(
+  languageCode: LanguageCode,
+  topicId: string,
+  tierId: QuizTierId,
+  variantId: SpeechVariantId
+) {
+  const attempts = await db.attempts
+    .where("languageCode")
+    .equals(languageCode)
+    .filter((attempt) => attempt.topicId === topicId && attempt.tierId === tierId && attempt.variantId === variantId && attempt.correct)
+    .toArray();
+  return new Set(attempts.map((attempt) => attempt.questionId));
 }
 
 export async function saveAttempt(
@@ -270,13 +354,14 @@ export async function latestIncompleteSession(languageCode: LanguageCode) {
 export async function resetLanguageProgress(languageCode: LanguageCode) {
   await db.transaction(
     "rw",
-    [db.mastery, db.attempts, db.sessions, db.tierProgress, db.characterSessions, db.characterAttempts, db.characterMastery],
+    [db.mastery, db.attempts, db.sessions, db.tierProgress, db.studyProgress, db.characterSessions, db.characterAttempts, db.characterMastery],
     async () => {
       await Promise.all([
         db.mastery.where("languageCode").equals(languageCode).delete(),
         db.attempts.where("languageCode").equals(languageCode).delete(),
         db.sessions.where("languageCode").equals(languageCode).delete(),
         db.tierProgress.where("languageCode").equals(languageCode).delete(),
+        db.studyProgress.where("languageCode").equals(languageCode).delete(),
         db.characterSessions.where("languageCode").equals(languageCode).delete(),
         db.characterAttempts.where("languageCode").equals(languageCode).delete(),
         db.characterMastery.where("languageCode").equals(languageCode).delete()

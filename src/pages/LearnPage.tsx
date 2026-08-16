@@ -18,7 +18,9 @@ export function LearnPage() {
     welcomeDismissed,
     dismissWelcome,
     characterCalloutDismissed,
-    dismissCharacterCallout
+    dismissCharacterCallout,
+    safetyKitDismissed,
+    dismissSafetyKit
   } = useLanguagePack();
   const base = `/${pack.code}`;
   const pathCollections = pack.collections.filter((collection) => (collection.presentation ?? "path") === "path");
@@ -132,11 +134,14 @@ export function LearnPage() {
         </section>
       ) : null}
 
-      {featuredTrack ? (
+      {featuredTrack && !safetyKitDismissed ? (
         <section className="safety-panel" aria-labelledby="safety-title">
           <div className="safety-panel__heading">
             <ShieldCheck aria-hidden="true" />
-            <div><h2 id="safety-title">{featuredTrack.title}</h2></div>
+            <div><h2 id="safety-title">{featuredTrack.title}</h2><p>{featuredTrack.description}</p></div>
+            <button className="icon-button safety-panel__dismiss" type="button" onClick={dismissSafetyKit} aria-label={`Dismiss ${featuredTrack.title}`}>
+              <X aria-hidden="true" />
+            </button>
           </div>
           <div className="safety-panel__links">
             {featuredTrack.topicIds.map((id) => {

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { getVocabularyForm, type VocabularyEntry, type VocabularyPriority } from "../languages";
 import { useLanguagePack } from "../languages/LanguagePackContext";
-import { db } from "../storage/db";
+import { db, recordStudyCardShown, recordStudyOutcome } from "../storage/db";
 import {
   aggregateVocabularyReviewSignals,
   selectStudyQueue,
@@ -62,29 +62,42 @@ export function VocabularyStudyPage({ source = "topic" }: { source?: "topic" | "
   ) ?? [], [phraseSet, priority, selectedScene, topic]);
   const candidateKey = candidateVocabulary.map((entry) => entry.id).join("|");
   const quizTierKey = pack.quiz.tiers.map((tier) => tier.id).join("|");
-  const masteryRecords = useLiveQuery(async () => {
-    if (mode === "all" || !candidateVocabulary.length) return [];
+  const studyScopeId = phraseSet ? `phrases:${phraseSet.id}` : `topic:${topic?.id ?? "unknown"}`;
+  const studyData = useLiveQuery(async () => {
+    if (mode === "all" || !candidateVocabulary.length) return { mastery: [], progress: [] };
     const sourceIds = new Set(candidateVocabulary.map((entry) => entry.id));
     const tierIds = new Set(pack.quiz.tiers.map((tier) => tier.id));
-    return db.mastery
-      .where("languageCode")
-      .equals(pack.code)
-      .filter((record) => record.variantId === variantId && tierIds.has(record.tierId) && sourceIds.has(record.sourceId))
-      .toArray();
-  }, [candidateKey, mode, pack.code, quizTierKey, variantId]);
+    const [mastery, progress] = await Promise.all([
+      db.mastery
+        .where("languageCode")
+        .equals(pack.code)
+        .filter((record) => record.variantId === variantId && tierIds.has(record.tierId) && sourceIds.has(record.sourceId))
+        .toArray(),
+      db.studyProgress
+        .where("[languageCode+scopeId]")
+        .equals([pack.code, studyScopeId])
+        .filter((record) => sourceIds.has(record.sourceId))
+        .toArray()
+    ]);
+    return { mastery, progress };
+  }, [candidateKey, mode, pack.code, quizTierKey, studyScopeId, variantId]);
   const reviewSignals = useMemo(
-    () => aggregateVocabularyReviewSignals(masteryRecords ?? []),
-    [masteryRecords]
+    () => aggregateVocabularyReviewSignals(studyData?.mastery ?? []),
+    [studyData?.mastery]
+  );
+  const previouslyShown = useMemo(
+    () => new Set(studyData?.progress.map((record) => record.sourceId) ?? []),
+    [studyData?.progress]
   );
   const baseQueue = useMemo(() => mode === "all"
     ? candidateVocabulary
-    : masteryRecords === undefined
+    : studyData === undefined
       ? []
-      : selectStudyQueue(candidateVocabulary, reviewSignals, FOCUS_LIMIT),
-  [candidateVocabulary, masteryRecords, mode, reviewSignals]);
-  const scopeKey = `${source}:${topicId ?? ""}:${sceneId ?? ""}:${priority ?? ""}:${mode}:${baseQueue.map((entry) => entry.id).join("|")}`;
+      : selectStudyQueue(candidateVocabulary, reviewSignals, FOCUS_LIMIT, previouslyShown),
+  [candidateVocabulary, mode, previouslyShown, reviewSignals, studyData]);
+  const selectionKey = `${source}:${topicId ?? ""}:${sceneId ?? ""}:${priority ?? ""}:${mode}:${candidateKey}`;
   const [queue, setQueue] = useState<VocabularyEntry[]>(baseQueue);
-  const [queueKey, setQueueKey] = useState(scopeKey);
+  const [queueKey, setQueueKey] = useState("");
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [requeued, setRequeued] = useState<Set<string>>(new Set());
@@ -93,10 +106,12 @@ export function VocabularyStudyPage({ source = "topic" }: { source?: "topic" | "
   const [cardTransition, setCardTransition] = useState<CardTransition>({ direction: 0, velocity: 0, reduced: reduceMotion });
   const cardButtonRef = useRef<HTMLButtonElement>(null);
   const restoreCardFocus = useRef(false);
-  const activeQueue = queueKey === scopeKey ? queue : baseQueue;
+  const shownThisRound = useRef(new Set<string>());
+  const activeQueue = queueKey === selectionKey ? queue : baseQueue;
+  const activeEntry = activeQueue[index];
 
   const returnTo = phraseSet
-    ? `${basePath}/phrases`
+    ? `${basePath}/phrases?tab=practice`
     : topic
     ? selectedScene
       ? `${basePath}/topic/${topic.id}/scene/${selectedScene.id}#vocabulary-title`
@@ -104,16 +119,24 @@ export function VocabularyStudyPage({ source = "topic" }: { source?: "topic" | "
     : `${basePath}/topics`;
 
   useEffect(() => {
-    if (mode === "focus" && masteryRecords === undefined) return;
+    if (mode === "focus" && studyData === undefined) return;
+    if (queueKey === selectionKey) return;
     setQueue(baseQueue);
-    setQueueKey(scopeKey);
+    setQueueKey(selectionKey);
     setIndex(0);
     setFlipped(false);
     setRequeued(new Set());
     setOutcomes(new Map());
     setCompleted(false);
+    shownThisRound.current = new Set();
     setCardTransition({ direction: 0, velocity: 0, reduced: reduceMotion });
-  }, [baseQueue, masteryRecords, mode, reduceMotion, scopeKey]);
+  }, [baseQueue, mode, queueKey, reduceMotion, selectionKey, studyData]);
+
+  useEffect(() => {
+    if (mode !== "focus" || !activeEntry || shownThisRound.current.has(activeEntry.id)) return;
+    shownThisRound.current.add(activeEntry.id);
+    void recordStudyCardShown(pack.code, studyScopeId, activeEntry.id);
+  }, [activeEntry, mode, pack.code, studyScopeId]);
 
   const move = useCallback((delta: -1 | 1, velocity = 0, restoreFocus = false) => {
     const target = Math.min(Math.max(index + delta, 0), activeQueue.length - 1);
@@ -141,23 +164,26 @@ export function VocabularyStudyPage({ source = "topic" }: { source?: "topic" | "
 
     setOutcomes((items) => {
       const next = new Map(items);
-      next.set(current.id, rating === "got-it" ? "recalled" : "unresolved");
+      const outcome = rating === "got-it" ? "recalled" : "unresolved";
+      next.set(current.id, outcome);
+      void recordStudyOutcome(pack.code, studyScopeId, current.id, outcome);
       return next;
     });
     if (index >= activeQueue.length - 1) setCompleted(true);
     else setIndex((currentIndex) => currentIndex + 1);
-  }, [activeQueue, flipped, index, mode, reduceMotion, requeued]);
+  }, [activeQueue, flipped, index, mode, pack.code, reduceMotion, requeued, studyScopeId]);
 
   const resetFocusRound = useCallback(() => {
     setQueue(baseQueue);
-    setQueueKey(scopeKey);
+    setQueueKey(selectionKey);
     setIndex(0);
     setFlipped(false);
     setRequeued(new Set());
     setOutcomes(new Map());
     setCompleted(false);
+    shownThisRound.current = new Set();
     setCardTransition({ direction: 0, velocity: 0, reduced: reduceMotion });
-  }, [baseQueue, reduceMotion, scopeKey]);
+  }, [baseQueue, reduceMotion, selectionKey]);
 
   useEffect(() => {
     if (!restoreCardFocus.current || completed) return;
@@ -240,7 +266,7 @@ export function VocabularyStudyPage({ source = "topic" }: { source?: "topic" | "
     );
   }
 
-  const entry = activeQueue[index];
+  const entry = activeEntry;
   const form = getVocabularyForm(entry, variantId);
   const definitions = pack.defineVocabulary?.(topic, entry) ?? {
     target: form.representations.target,

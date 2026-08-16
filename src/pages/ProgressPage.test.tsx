@@ -27,6 +27,7 @@ afterEach(async () => {
     db.attempts.clear(),
     db.sessions.clear(),
     db.tierProgress.clear(),
+    db.studyProgress.clear(),
     db.characterMastery.clear()
   ]);
 });
@@ -35,7 +36,7 @@ describe("Progress page", () => {
   it("shows a useful first-session state instead of zero statistics", async () => {
     renderProgress();
 
-    expect(await screen.findByRole("heading", { name: "Your learning record starts with a checkpoint" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Your learning record starts with one card" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Learning statistics" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open Conversation" })).toHaveAttribute("href", "/ja/topic/greetings-small-talk");
     expect(screen.getByRole("link", { name: "Practice Kana" })).toHaveAttribute("href", "/ja/characters");
@@ -63,6 +64,24 @@ describe("Progress page", () => {
     expect(screen.getByText("100%")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Recall breakdown" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Recent activity" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Your learning record starts with a checkpoint" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Your learning record starts with one card" })).not.toBeInTheDocument();
+  });
+
+  it("shows quick-study coverage even before the first quiz answer", async () => {
+    await db.studyProgress.put({
+      id: "ja:topic:greetings-small-talk:hello",
+      languageCode: "ja",
+      scopeId: "topic:greetings-small-talk",
+      sourceId: "hello",
+      shownCount: 1,
+      recalled: 0,
+      unresolved: 0,
+      firstShownAt: 1,
+      updatedAt: 1
+    });
+    renderProgress();
+    expect(await screen.findByLabelText("Learning statistics")).toBeInTheDocument();
+    expect(screen.getByText("words studied")).toBeInTheDocument();
+    expect(screen.getByLabelText("Quick study completion")).toHaveAttribute("aria-valuenow", "1");
   });
 });

@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { useLanguagePack } from "../languages/LanguagePackContext";
 import { completeSession, db } from "../storage/db";
+import { buildPhraseQuizTopic, PHRASE_QUIZ_TOPIC_ID } from "../quiz/phrases";
 
 export function ResultsPage() {
   const reduceMotion = useReducedMotion();
@@ -31,7 +32,8 @@ export function ResultsPage() {
   if (!sessionId) return <Navigate to={`${base}/learn`} replace />;
   if (!data) return <div className="page quiz-loading" role="status"><span className="spinner" /> Loading results…</div>;
   const { session, attempts } = data;
-  const topic = indexes.topics.get(session.topicId);
+  const phraseQuiz = session.topicId === PHRASE_QUIZ_TOPIC_ID;
+  const topic = phraseQuiz ? buildPhraseQuizTopic(pack) : indexes.topics.get(session.topicId);
   if (!topic || !tier) return <Navigate to={`${base}/learn`} replace />;
   const score = attempts.filter((attempt) => attempt.correct).length;
   const passed = score >= tier.passScore;
@@ -49,8 +51,8 @@ export function ResultsPage() {
         <h2>{passed ? "Tier passed" : "Keep this tier open"}</h2>
         <p>{passed ? "The next kind of recall is ready." : `You need ${Math.max(0, tier.passScore - score)} more correct answers to move on.`}</p>
         <div className="result-actions">
-          {passed && nextTierId ? <Link className="button" to={`${base}/topic/${topic.id}/quiz/${nextTierId}`}>Start next tier <ArrowRight aria-hidden="true" /></Link> : <Link className="button" to={`${base}/topic/${topic.id}/quiz/${session.tierId}`}><RotateCcw aria-hidden="true" /> Try again</Link>}
-          <Link className="button button--secondary" to={`${base}/topic/${topic.id}`}>Return to topic</Link>
+          {passed && nextTierId ? <Link className="button" to={`${base}/topic/${topic.id}/quiz/${nextTierId}`}>Start next tier <ArrowRight aria-hidden="true" /></Link> : <Link className="button" to={phraseQuiz ? `${base}/phrases/quiz` : `${base}/topic/${topic.id}/quiz/${session.tierId}`}><RotateCcw aria-hidden="true" /> Try again</Link>}
+          <Link className="button button--secondary" to={phraseQuiz ? `${base}/phrases?tab=practice` : `${base}/topic/${topic.id}?tab=checkpoint`}>Return to {phraseQuiz ? "phrases" : "topic"}</Link>
         </div>
       </motion.section>
 
@@ -58,7 +60,7 @@ export function ResultsPage() {
         <section className="review-section" aria-labelledby="review-title">
           <div className="section-heading">
             <div><h2 id="review-title">Review the misses</h2><p>These items will be weighted first next time.</p></div>
-            <Link className="button button--secondary" to={`${base}/topic/${topic.id}/study?mode=focus`}>Review weak words <ArrowRight aria-hidden="true" /></Link>
+            <Link className="button button--secondary" to={phraseQuiz ? `${base}/phrases/study?mode=focus` : `${base}/topic/${topic.id}/study?mode=focus`}>Review weak words <ArrowRight aria-hidden="true" /></Link>
           </div>
           <ul className="review-list">
             {missed.map((attempt) => {

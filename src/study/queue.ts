@@ -34,11 +34,15 @@ export function aggregateVocabularyReviewSignals(records: VocabularyMasterySigna
 export function selectStudyQueue(
   vocabulary: VocabularyEntry[],
   signals: ReadonlyMap<string, VocabularyReviewSignal>,
-  limit = 12
+  limit = 12,
+  previouslyShown: ReadonlySet<string> = new Set()
 ) {
   if (limit <= 0) return [];
 
-  return vocabulary
+  const unseen = vocabulary.filter((entry) => !previouslyShown.has(entry.id));
+  const candidates = unseen.length ? unseen : vocabulary;
+
+  return candidates
     .map((entry, authoredIndex) => ({ entry, authoredIndex, signal: signals.get(entry.id) }))
     .sort((left, right) => {
       const leftGroup = left.signal ? (left.signal.confidence < 3 ? 0 : 2) : 1;
