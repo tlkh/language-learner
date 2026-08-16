@@ -57,6 +57,13 @@ const question: QuizQuestion = {
 };
 
 describe("Learn page", () => {
+  it("links back to the main language selector", () => {
+    localStorage.setItem("ll-welcome-by-language", JSON.stringify({ ja: true }));
+    renderLearnPage();
+
+    expect(screen.getByRole("link", { name: "Back to language selection" })).toHaveAttribute("href", "/");
+  });
+
   it("starts with the authored topic when no quiz activity exists", async () => {
     localStorage.setItem("ll-welcome-by-language", JSON.stringify({ ja: true }));
     renderLearnPage();

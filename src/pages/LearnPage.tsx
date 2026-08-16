@@ -1,5 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowRight, BookOpenCheck, CircleAlert, Languages, Play, ShieldCheck, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpenCheck, CircleAlert, Languages, Play, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { BottomSheet } from "../components/BottomSheet";
@@ -80,7 +80,16 @@ export function LearnPage() {
 
   return (
     <div className="page page--learn">
-      <ScreenHeader title="Learn" description={pack.presentation.tagline} actions={<OfflineBadge />} />
+      <ScreenHeader
+        title="Learn"
+        description={pack.presentation.tagline}
+        leading={(
+          <Link className="icon-button" to="/" aria-label="Back to language selection">
+            <ArrowLeft aria-hidden="true" />
+          </Link>
+        )}
+        actions={<OfflineBadge />}
+      />
 
       {resumeTopic && resumeTier && data?.resume ? (
         <section className="resume-panel" aria-labelledby="resume-title">
