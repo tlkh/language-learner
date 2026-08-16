@@ -52,14 +52,15 @@ describe("character practice UI", () => {
     expect(screen.queryByRole("heading", { name: "Kana table & pronunciation" })).not.toBeInTheDocument();
   });
 
-  it("labels Vietnamese letter names and pronunciations instead of repeating an unexplained character", () => {
+  it("labels Vietnamese romanized letter names and English-friendly pronunciation hints", () => {
     renderRoute("/vi/characters", vietnamesePack);
 
     expect(screen.getByText("How to read each card")).toBeInTheDocument();
     expect(screen.getAllByText("Letter name").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Pronunciation (IPA)").length).toBeGreaterThan(0);
-    expect(screen.getByText("/aː/")).toBeInTheDocument();
-    expect(screen.getByText("/a/")).toBeInTheDocument();
+    expect(screen.getAllByText("Pronunciation hint").length).toBeGreaterThan(0);
+    expect(screen.getByText("ah, as in father, held longer")).toBeInTheDocument();
+    expect(screen.getByText("short ah, as in father but clipped")).toBeInTheDocument();
+    expect(screen.queryByText("Pronunciation (IPA)")).not.toBeInTheDocument();
   });
 
   it("withholds wrong answers, keeps the card retryable, and locks it after recall", async () => {

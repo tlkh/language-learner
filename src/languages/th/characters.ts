@@ -3,22 +3,86 @@ import type { CharacterCollection, CharacterCourse, CharacterGroup, CharacterIte
 type RawUnit = readonly [glyph: string, reading: string, aliases?: readonly string[]];
 type RawGroup = readonly [id: string, title: string, units: readonly RawUnit[]];
 
-const consonantSounds: Record<string, readonly [initial: string, final: string]> = {
-  "ก": ["k · /k/", "k · /k/"], "ข": ["kh · /kʰ/", "k · /k/"], "ฃ": ["kh · /kʰ/", "—"],
-  "ค": ["kh · /kʰ/", "k · /k/"], "ฅ": ["kh · /kʰ/", "—"], "ฆ": ["kh · /kʰ/", "k · /k/"],
-  "ง": ["ng · /ŋ/", "ng · /ŋ/"], "จ": ["ch · /tɕ/", "t · /t/"], "ฉ": ["ch · /tɕʰ/", "—"],
-  "ช": ["ch · /tɕʰ/", "t · /t/"], "ซ": ["s · /s/", "t · /t/"], "ฌ": ["ch · /tɕʰ/", "t · /t/"],
-  "ญ": ["y · /j/", "n · /n/"], "ฎ": ["d · /d/", "t · /t/"], "ฏ": ["t · /t/", "t · /t/"],
-  "ฐ": ["th · /tʰ/", "t · /t/"], "ฑ": ["th /tʰ/ or d /d/", "t · /t/"], "ฒ": ["th · /tʰ/", "t · /t/"],
-  "ณ": ["n · /n/", "n · /n/"], "ด": ["d · /d/", "t · /t/"], "ต": ["t · /t/", "t · /t/"],
-  "ถ": ["th · /tʰ/", "t · /t/"], "ท": ["th · /tʰ/", "t · /t/"], "ธ": ["th · /tʰ/", "t · /t/"],
-  "น": ["n · /n/", "n · /n/"], "บ": ["b · /b/", "p · /p/"], "ป": ["p · /p/", "p · /p/"],
-  "ผ": ["ph · /pʰ/", "—"], "ฝ": ["f · /f/", "—"], "พ": ["ph · /pʰ/", "p · /p/"],
-  "ฟ": ["f · /f/", "p · /p/"], "ภ": ["ph · /pʰ/", "p · /p/"], "ม": ["m · /m/", "m · /m/"],
-  "ย": ["y · /j/", "y glide · /j/"], "ร": ["r · /r/", "n · /n/"], "ล": ["l · /l/", "n /n/ (sometimes w /w/)"],
-  "ว": ["w · /w/", "w glide · /w/"], "ศ": ["s · /s/", "t · /t/"], "ษ": ["s · /s/", "t · /t/"],
-  "ส": ["s · /s/", "t · /t/"], "ห": ["h · /h/", "—"], "ฬ": ["l · /l/", "n · /n/"],
-  "อ": ["vowel carrier; glottal onset /ʔ/", "—"], "ฮ": ["h · /h/", "—"]
+const consonantSoundHints: Record<string, readonly [initial: string, final: string]> = {
+  "ก": ["k, as in skate, with little puff of air", "a clipped k, as at the end of back"],
+  "ข": ["k, as in key, with a strong puff of air", "a clipped k, as at the end of back"],
+  "ฃ": ["k, as in key, with a strong puff of air", "not used at the end of a syllable"],
+  "ค": ["k, as in key, with a strong puff of air", "a clipped k, as at the end of back"],
+  "ฅ": ["k, as in key, with a strong puff of air", "not used at the end of a syllable"],
+  "ฆ": ["k, as in key, with a strong puff of air", "a clipped k, as at the end of back"],
+  "ง": ["ng, as in sing", "ng, as in sing"],
+  "จ": ["ch, as in chair, with little puff of air", "a clipped t, as at the end of cat"],
+  "ฉ": ["ch, as in chair, with a strong puff of air", "not used at the end of a syllable"],
+  "ช": ["ch, as in chair, with a strong puff of air", "a clipped t, as at the end of cat"],
+  "ซ": ["s, as in sun", "a clipped t, as at the end of cat"],
+  "ฌ": ["ch, as in chair, with a strong puff of air", "a clipped t, as at the end of cat"],
+  "ญ": ["y, as in yes", "n, as in no"],
+  "ฎ": ["d, as in dog", "a clipped t, as at the end of cat"],
+  "ฏ": ["t, as in stop, with little puff of air", "a clipped t, as at the end of cat"],
+  "ฐ": ["t, as in top, with a strong puff of air; not English th", "a clipped t, as at the end of cat"],
+  "ฑ": ["t, as in top, with a strong puff of air, or d, as in dog", "a clipped t, as at the end of cat"],
+  "ฒ": ["t, as in top, with a strong puff of air; not English th", "a clipped t, as at the end of cat"],
+  "ณ": ["n, as in no", "n, as in no"],
+  "ด": ["d, as in dog", "a clipped t, as at the end of cat"],
+  "ต": ["t, as in stop, with little puff of air", "a clipped t, as at the end of cat"],
+  "ถ": ["t, as in top, with a strong puff of air; not English th", "a clipped t, as at the end of cat"],
+  "ท": ["t, as in top, with a strong puff of air; not English th", "a clipped t, as at the end of cat"],
+  "ธ": ["t, as in top, with a strong puff of air; not English th", "a clipped t, as at the end of cat"],
+  "น": ["n, as in no", "n, as in no"],
+  "บ": ["b, as in boy", "a clipped p, as at the end of cap"],
+  "ป": ["p, as in spin, with little puff of air", "a clipped p, as at the end of cap"],
+  "ผ": ["p, as in pie, with a strong puff of air; not f", "not used at the end of a syllable"],
+  "ฝ": ["f, as in fan", "not used at the end of a syllable"],
+  "พ": ["p, as in pie, with a strong puff of air; not f", "a clipped p, as at the end of cap"],
+  "ฟ": ["f, as in fan", "a clipped p, as at the end of cap"],
+  "ภ": ["p, as in pie, with a strong puff of air; not f", "a clipped p, as at the end of cap"],
+  "ม": ["m, as in man", "m, as in man"],
+  "ย": ["y, as in yes", "a y glide, as at the end of day"],
+  "ร": ["a quick tapped or lightly rolled r", "n, as in no"],
+  "ล": ["l, as in lamp", "n, as in no; sometimes a w glide"],
+  "ว": ["w, as in win", "a w glide, as at the end of cow"],
+  "ศ": ["s, as in sun", "a clipped t, as at the end of cat"],
+  "ษ": ["s, as in sun", "a clipped t, as at the end of cat"],
+  "ส": ["s, as in sun", "a clipped t, as at the end of cat"],
+  "ห": ["h, as in hat", "not used at the end of a syllable"],
+  "ฬ": ["l, as in lamp", "n, as in no"],
+  "อ": ["a light catch, as in uh-oh; otherwise it carries a vowel", "not used at the end of a syllable"],
+  "ฮ": ["h, as in hat", "not used at the end of a syllable"]
+};
+
+const vowelPronunciationHints: Record<string, string> = {
+  "อะ": "short ah, as in father but clipped",
+  "อา": "long ah, as in father",
+  "อิ": "short ee, as in see but clipped",
+  "อี": "long ee, as in see",
+  "อึ": "short unrounded oo; say oo with relaxed, spread lips",
+  "อือ": "long unrounded oo; say oo with relaxed, spread lips",
+  "อุ": "short oo, as in food but clipped",
+  "อู": "long oo, as in food",
+  "เอะ": "short ay, as in say, without the final y glide",
+  "เอ": "long ay, as in say, without the final y glide",
+  "แอะ": "short e, as in bed",
+  "แอ": "long e, as in bed",
+  "โอะ": "short oh, as in go, without the final w glide",
+  "โอ": "long oh, as in go, without the final w glide",
+  "เอาะ": "short aw, as in law",
+  "ออ": "long aw, as in law",
+  "เออะ": "short uh, as in fur without an r sound",
+  "เออ": "long uh, as in fur without an r sound",
+  "เอียะ": "short ee-ah, run together",
+  "เอีย": "long ee-ah, run together",
+  "เอือะ": "short unrounded oo-ah, run together",
+  "เอือ": "long unrounded oo-ah, run together",
+  "อัวะ": "short oo-ah, run together",
+  "อัว": "long oo-ah, run together",
+  "ไอ": "eye",
+  "ใอ": "eye",
+  "เอา": "ow, as in cow",
+  "อำ": "ahm, as in balm",
+  "ฤ": "short rue: r followed by an unrounded oo",
+  "ฤๅ": "long rue: r followed by an unrounded oo",
+  "ฦ": "short lue: l followed by an unrounded oo",
+  "ฦๅ": "long lue: l followed by an unrounded oo"
 };
 
 const consonants: readonly RawGroup[] = [
@@ -45,17 +109,15 @@ const items: CharacterItem[] = [];
 
 function referenceDetails(collectionId: string, groupId: string, glyph: string, reading: string) {
   if (collectionId === "consonants") {
-    const [initial, final] = consonantSounds[glyph];
+    const [initial, final] = consonantSoundHints[glyph];
     return [
       { label: "Letter name", value: reading },
-      { label: "Initial sound", value: initial },
-      { label: "Final sound", value: final }
+      { label: "Initial sound hint", value: initial },
+      { label: "Final sound hint", value: final }
     ];
   }
   if (collectionId === "vowels") {
-    const normalizedReading = reading.replace(/:$/, "");
-    const duration = groupId === "short" ? "short" : groupId === "long" || reading.endsWith(":") ? "long" : undefined;
-    return [{ label: "Pronunciation", value: duration ? `${normalizedReading} · ${duration}` : normalizedReading }];
+    return [{ label: "Pronunciation hint", value: vowelPronunciationHints[glyph] }];
   }
   const [markName, effect] = reading.split(" / ");
   return [{ label: "Mark name", value: markName }, { label: "Effect", value: effect }];

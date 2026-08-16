@@ -1,6 +1,7 @@
 /* Hallmark · macrostructure: Workbench · genre: modern-minimal · tone: soft · knobs: compact density + horizontal rails
- * theme: Coral · anchor hue: coral 35 · enrichment: none · nav: N5 · footer: Ft2
- * pre-emit critique: P5 H5 E5 S5 R5 V4 · slop: pass (1–58) · contrast: pass (40–41)
+ * theme: custom language-aware accents · selector: neutral · enrichment: none · nav: N5 · footer: Ft2
+ * axes: light / geometric-sans / contextual national hues · one active accent per viewport
+ * pre-emit critique: P5 H5 E5 S5 R5 V5 · slop: pass (1–58) · contrast: pass (40–41)
  * honest: pass (46) · chrome: pass (47) · tokens: pass (48) · responsive: pass (49)
  * icons: pass (30) · mobile: pass (34, 49, 50–57) · nav/footer/hero: pass (42–45)
  */
@@ -15,10 +16,10 @@
   --color-muted: oklch(44% 0.014 55);
   --color-rule: oklch(83% 0.016 60);
   --color-rule-strong: oklch(68% 0.018 55);
-  --color-accent: oklch(54% 0.15 35);
-  --color-accent-soft: oklch(92% 0.035 35);
-  --color-accent-ink: oklch(18% 0.025 35);
-  --color-focus: oklch(48% 0.18 35);
+  --color-accent: oklch(42% 0.028 55);
+  --color-accent-soft: oklch(92% 0.018 55);
+  --color-accent-ink: oklch(18% 0.018 55);
+  --color-focus: oklch(42% 0.08 55);
   --color-success: oklch(48% 0.12 155);
   --color-success-soft: oklch(92% 0.03 155);
   --color-error: oklch(48% 0.16 24);
@@ -89,10 +90,10 @@
   --color-muted: oklch(72% 0.014 65);
   --color-rule: oklch(34% 0.018 55);
   --color-rule-strong: oklch(52% 0.02 55);
-  --color-accent: oklch(72% 0.12 35);
-  --color-accent-soft: oklch(28% 0.045 35);
+  --color-accent: oklch(76% 0.028 55);
+  --color-accent-soft: oklch(28% 0.018 55);
   --color-accent-ink: oklch(92% 0.018 65);
-  --color-focus: oklch(78% 0.13 35);
+  --color-focus: oklch(80% 0.08 55);
   --color-success: oklch(72% 0.1 155);
   --color-success-soft: oklch(25% 0.035 155);
   --color-error: oklch(74% 0.13 24);
@@ -101,4 +102,64 @@
   --color-material: oklch(18% 0.014 55 / 0.84);
   --shadow-whisper: 0 1px 2px oklch(4% 0.01 55 / 0.3);
   --shadow-float: 0 10px 32px oklch(4% 0.01 55 / 0.42);
+}
+
+/* Hinomaru crimson. */
+html[data-language="ja"] {
+  --color-accent: oklch(47% 0.19 12);
+  --color-accent-soft: oklch(93% 0.035 12);
+  --color-accent-ink: oklch(19% 0.035 12);
+  --color-focus: oklch(45% 0.21 12);
+}
+
+/* Gold from the Vietnamese flag's central star. */
+html[data-language="vi"] {
+  --color-accent: oklch(45% 0.11 82);
+  --color-accent-soft: oklch(93% 0.05 82);
+  --color-accent-ink: oklch(20% 0.04 82);
+  --color-focus: oklch(42% 0.14 82);
+}
+
+/* Royal blue from the central band of Thailand's flag. */
+html[data-language="th"] {
+  --color-accent: oklch(44% 0.16 263);
+  --color-accent-soft: oklch(93% 0.035 263);
+  --color-accent-ink: oklch(19% 0.04 263);
+  --color-focus: oklch(43% 0.2 263);
+}
+
+/* Merdeka red, warmed to stay distinct from the Japanese crimson. */
+html[data-language="id"] {
+  --color-accent: oklch(49% 0.2 29);
+  --color-accent-soft: oklch(93% 0.04 29);
+  --color-accent-ink: oklch(19% 0.04 29);
+  --color-focus: oklch(46% 0.21 29);
+}
+
+[data-theme="dark"][data-language="ja"] {
+  --color-accent: oklch(73% 0.15 12);
+  --color-accent-soft: oklch(27% 0.055 12);
+  --color-accent-ink: oklch(95% 0.015 12);
+  --color-focus: oklch(78% 0.17 12);
+}
+
+[data-theme="dark"][data-language="vi"] {
+  --color-accent: oklch(80% 0.13 82);
+  --color-accent-soft: oklch(28% 0.055 82);
+  --color-accent-ink: oklch(95% 0.015 82);
+  --color-focus: oklch(83% 0.15 82);
+}
+
+[data-theme="dark"][data-language="th"] {
+  --color-accent: oklch(74% 0.13 263);
+  --color-accent-soft: oklch(27% 0.055 263);
+  --color-accent-ink: oklch(95% 0.015 263);
+  --color-focus: oklch(79% 0.15 263);
+}
+
+[data-theme="dark"][data-language="id"] {
+  --color-accent: oklch(74% 0.16 29);
+  --color-accent-soft: oklch(27% 0.06 29);
+  --color-accent-ink: oklch(95% 0.015 29);
+  --color-focus: oklch(79% 0.18 29);
 }

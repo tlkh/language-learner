@@ -52,11 +52,11 @@ describe("Vietnamese language pack", () => {
     expect(combined.map((item) => item.representations.glyph)).toEqual(["ch", "gh", "gi", "kh", "ng", "ngh", "nh", "ph", "qu", "th", "tr"]);
   });
 
-  it("separates each written unit's name from its pronunciation", () => {
+  it("separates each written unit's romanized name from its pronunciation hint", () => {
     const breveA = vietnamesePack.characterCourse.items.find((item) => item.representations.glyph === "ă")!;
     expect(breveA.referenceDetails).toEqual([
-      { label: "Letter name", value: "ă" },
-      { label: "Pronunciation (IPA)", value: "/a/" }
+      { label: "Letter name", value: "a" },
+      { label: "Pronunciation hint", value: "short ah, as in father but clipped" }
     ]);
   });
 
@@ -118,8 +118,8 @@ describe("Thai language pack", () => {
     const koKai = thaiPack.characterCourse.items.find((item) => item.representations.glyph === "ก")!;
     expect(koKai.referenceDetails).toEqual([
       { label: "Letter name", value: "ko kai" },
-      { label: "Initial sound", value: "k · /k/" },
-      { label: "Final sound", value: "k · /k/" }
+      { label: "Initial sound hint", value: "k, as in skate, with little puff of air" },
+      { label: "Final sound hint", value: "a clipped k, as at the end of back" }
     ]);
   });
 });
@@ -153,12 +153,23 @@ describe("Indonesian language pack", () => {
     expect(indonesianPack.quiz.grade(question, "NAMA").status).toBe("correct");
   });
 
-  it("labels letter names separately from IPA pronunciation", () => {
+  it("labels official romanized letter names separately from pronunciation hints", () => {
     const c = indonesianPack.characterCourse.items.find((item) => item.representations.glyph === "c")!;
     expect(c.referenceDetails).toEqual([
       { label: "Letter name", value: "ce" },
-      { label: "Pronunciation (IPA)", value: "/tʃ/" }
+      { label: "Pronunciation hint", value: "ch, as in chair" }
     ]);
+  });
+});
+
+describe("non-Japanese character guidance", () => {
+  it("uses basic Latin letter names and avoids IPA notation", () => {
+    for (const pack of [vietnamesePack, thaiPack, indonesianPack]) {
+      const details = pack.characterCourse.items.flatMap((item) => item.referenceDetails ?? []);
+      expect(details.some((detail) => detail.label === "Pronunciation (IPA)")).toBe(false);
+      expect(details.filter((detail) => detail.label === "Letter name").every((detail) => /^[\x20-\x7E]+$/.test(detail.value))).toBe(true);
+      expect(details.filter((detail) => detail.label.toLowerCase().includes("sound hint") || detail.label === "Pronunciation hint").every((detail) => !/\/[^/]+\//.test(detail.value))).toBe(true);
+    }
   });
 });
 

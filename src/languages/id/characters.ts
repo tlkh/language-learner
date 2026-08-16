@@ -3,12 +3,12 @@ import type { CharacterCollection, CharacterCourse, CharacterGroup, CharacterIte
 type RawUnit = readonly [glyph: string, reading: string, aliases?: readonly string[]];
 type RawGroup = readonly [id: string, title: string, units: readonly RawUnit[]];
 
-const pronunciations: Record<string, string> = {
-  a: "/a/", e: "/ə/, /e/, or /ɛ/", i: "/i/", o: "/o/ or /ɔ/", u: "/u/",
-  b: "/b/", c: "/tʃ/", d: "/d/", f: "/f/", g: "/ɡ/", h: "/h/", j: "/dʒ/",
-  k: "/k/", l: "/l/", m: "/m/", n: "/n/", p: "/p/", q: "/k/", r: "/r/",
-  s: "/s/", t: "/t/", v: "/f/ or /v/ in loanwords", w: "/w/", x: "/ks/; often /s/ initially",
-  y: "/j/", z: "/z/", ng: "/ŋ/", ny: "/ɲ/", kh: "/x/", sy: "/ʃ/"
+const pronunciationHints: Record<string, string> = {
+  a: "ah, as in father", e: "usually uh, as in about; sometimes e, as in bed, or ay without the final y glide", i: "ee, as in see", o: "oh, as in go, or aw, as in law", u: "oo, as in food",
+  b: "b, as in boy", c: "ch, as in chair", d: "d, as in dog", f: "f, as in fan", g: "g, as in go", h: "h, as in hat", j: "j, as in jam",
+  k: "k, as in skin", l: "l, as in lamp", m: "m, as in man", n: "n, as in no", p: "p, as in spin", q: "k, as in skin; mainly in names and loanwords", r: "a quick tapped or rolled r, like Spanish r",
+  s: "s, as in sun", t: "t, as in stop", v: "usually f, as in fan; sometimes v, as in very, in loanwords", w: "w, as in win", x: "ks, as in box; often s at the start of a word",
+  y: "y, as in yes", z: "z, as in zoo", ng: "ng, as in sing", ny: "ny, as in canyon", kh: "a raspy h, like ch in Scottish loch", sy: "sh, as in shoe"
 };
 
 const vowels: readonly RawGroup[] = [["vowels", "Vowels", [["a", "a"], ["e", "e"], ["i", "i"], ["o", "o"], ["u", "u"]]]];
@@ -26,7 +26,7 @@ function buildGroups(collectionId: string, sectionId: string, groups: readonly R
         aliases: aliases?.length ? { reading: [...aliases] } : undefined,
         referenceDetails: [
           { label: collectionId === "digraphs" ? "Digraph name" : "Letter name", value: reading },
-          { label: "Pronunciation (IPA)", value: pronunciations[glyph] }
+          { label: "Pronunciation hint", value: pronunciationHints[glyph] }
         ]
       });
       return id;

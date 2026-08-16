@@ -3,36 +3,36 @@ import type { CharacterCollection, CharacterCourse, CharacterGroup, CharacterIte
 type RawUnit = readonly [glyph: string, reading: string, aliases?: readonly string[]];
 type RawGroup = readonly [id: string, title: string, units: readonly RawUnit[]];
 
-const alphabetPronunciations: Record<string, string> = {
-  a: "/aː/",
-  "ă": "/a/",
-  "â": "/ə/",
-  e: "/ɛ/",
-  "ê": "/e/",
-  i: "/i/",
-  o: "/ɔ/",
-  "ô": "/o/",
-  "ơ": "/əː/",
-  u: "/u/",
-  "ư": "/ɯ/",
-  y: "/i/",
-  b: "/ɓ/",
-  c: "/k/",
-  d: "/z/ (North), /j/ (South)",
-  "đ": "/ɗ/",
-  g: "/ɣ/",
-  h: "/h/",
-  k: "/k/",
-  l: "/l/",
-  m: "/m/",
-  n: "/n/",
-  p: "/p/ (mainly final or in loanwords)",
-  q: "/k/ (normally in qu /kw/)",
-  r: "/z/ (North), /r/ (South)",
-  s: "/s/ (North), /ʂ/ (South)",
-  t: "/t/",
-  v: "/v/",
-  x: "/s/"
+const alphabetPronunciationHints: Record<string, string> = {
+  a: "ah, as in father, held longer",
+  "ă": "short ah, as in father but clipped",
+  "â": "uh, as in about",
+  e: "e, as in bed",
+  "ê": "ay, as in say, without the final y glide",
+  i: "ee, as in see",
+  o: "aw, as in law",
+  "ô": "oh, as in go, without the final w glide",
+  "ơ": "uh, as in fur without an r sound, held longer",
+  u: "oo, as in food",
+  "ư": "oo made with relaxed, unrounded lips",
+  y: "ee, as in see",
+  b: "b, as in boy, with a slight inward catch",
+  c: "k, as in skin",
+  d: "z, as in zoo (North); y, as in yes (South)",
+  "đ": "d, as in day, with a slight inward catch",
+  g: "a soft, raspy g made at the back of the throat",
+  h: "h, as in hat",
+  k: "k, as in skin",
+  l: "l, as in lamp",
+  m: "m, as in man",
+  n: "n, as in no",
+  p: "p, as in spin; mainly final or in loanwords",
+  q: "k; usually part of qu, like kw in quick",
+  r: "z, as in zoo (North); a rolled r (South)",
+  s: "s, as in sun (North); sh-like with the tongue curled back (South)",
+  t: "t, as in stop",
+  v: "v, as in very",
+  x: "s, as in sun"
 };
 
 const toneContours: Record<string, string> = {
@@ -44,24 +44,24 @@ const toneContours: Record<string, string> = {
   "nặng": "low and constricted"
 };
 
-const combinedPronunciations: Record<string, string> = {
-  ch: "/c/ initially; /k/ finally",
-  gh: "/ɣ/",
-  gi: "/z/ (North), /j/ (South)",
-  kh: "/x/",
-  ng: "/ŋ/",
-  ngh: "/ŋ/",
-  nh: "/ɲ/ initially; /ŋ/ finally",
-  ph: "/f/",
-  qu: "/kw/",
-  th: "/tʰ/",
-  tr: "/tɕ/ (North), /ʈ/ (South)"
+const combinedPronunciationHints: Record<string, string> = {
+  ch: "ch-like at the start; k, as in back, at the end",
+  gh: "a soft, raspy g made at the back of the throat",
+  gi: "z, as in zoo (North); y, as in yes (South)",
+  kh: "a raspy h, like ch in Scottish loch",
+  ng: "ng, as in sing",
+  ngh: "ng, as in sing",
+  nh: "ny, as in canyon, at the start; ng, as in sing, at the end",
+  ph: "f, as in fan",
+  qu: "kw, as in quick",
+  th: "t, as in top, with a strong puff of air",
+  tr: "ch-like (North); tr with the tongue curled back (South)"
 };
 
 const referenceDetails = (collectionId: string, glyph: string, reading: string) => {
   if (collectionId === "alphabet") return [
     { label: "Letter name", value: reading },
-    { label: "Pronunciation (IPA)", value: alphabetPronunciations[glyph] }
+    { label: "Pronunciation hint", value: alphabetPronunciationHints[glyph] }
   ];
   if (collectionId === "tones") return [
     { label: "Tone name", value: reading },
@@ -69,29 +69,29 @@ const referenceDetails = (collectionId: string, glyph: string, reading: string) 
   ];
   return [
     { label: "Example word", value: reading },
-    { label: "Pronunciation (IPA)", value: combinedPronunciations[glyph] }
+    { label: "Pronunciation hint", value: combinedPronunciationHints[glyph] }
   ];
 };
 
 const vowels: readonly RawGroup[] = [
-  ["a", "A", [["a", "a"], ["ă", "ă"], ["â", "â"]]],
-  ["e", "E", [["e", "e"], ["ê", "ê"]]],
+  ["a", "A", [["a", "a"], ["ă", "a", ["á", "ă"]], ["â", "o", ["ớ", "â"]]]],
+  ["e", "E", [["e", "e"], ["ê", "e", ["ê"]]]],
   ["i", "I", [["i", "i"]]],
-  ["o", "O", [["o", "o"], ["ô", "ô"], ["ơ", "ơ"]]],
-  ["u", "U", [["u", "u"], ["ư", "ư"]]],
-  ["y", "Y", [["y", "i dài", ["y"]]]]
+  ["o", "O", [["o", "o"], ["ô", "o", ["ô"]], ["ơ", "o", ["ơ"]]]],
+  ["u", "U", [["u", "u"], ["ư", "u", ["ư"]]]],
+  ["y", "Y", [["y", "i dai", ["i dài", "y"]]]]
 ];
 
 const consonants: readonly RawGroup[] = [
-  ["b-c", "B–C", [["b", "bê", ["b"]], ["c", "xê", ["c"]]]],
-  ["d-d", "D–Đ", [["d", "dê", ["d"]], ["đ", "đê", ["đ"]]]],
-  ["g-h", "G–H", [["g", "giê", ["g"]], ["h", "hát", ["h"]]]],
-  ["k-l", "K–L", [["k", "ca", ["ka", "k"]], ["l", "e-lờ", ["l"]]]],
-  ["m-n", "M–N", [["m", "em-mờ", ["m"]], ["n", "en-nờ", ["n"]]]],
-  ["p-q", "P–Q", [["p", "pê", ["p"]], ["q", "quy", ["qu", "q"]]]],
-  ["r-s", "R–S", [["r", "e-rờ", ["r"]], ["s", "ét-xì", ["s"]]]],
-  ["t-v", "T–V", [["t", "tê", ["t"]], ["v", "vê", ["v"]]]],
-  ["x", "X", [["x", "ích-xì", ["x"]]]]
+  ["b-c", "B–C", [["b", "be", ["bê", "b"]], ["c", "xe", ["xê", "c"]]]],
+  ["d-d", "D–Đ", [["d", "de", ["dê", "d"]], ["đ", "de", ["đê", "đ"]]]],
+  ["g-h", "G–H", [["g", "gie", ["giê", "g"]], ["h", "hat", ["hát", "h"]]]],
+  ["k-l", "K–L", [["k", "ca", ["ka", "k"]], ["l", "e-lo", ["e-lờ", "l"]]]],
+  ["m-n", "M–N", [["m", "em-mo", ["em-mờ", "m"]], ["n", "en-no", ["en-nờ", "n"]]]],
+  ["p-q", "P–Q", [["p", "pe", ["pê", "p"]], ["q", "quy", ["qu", "q"]]]],
+  ["r-s", "R–S", [["r", "e-ro", ["e-rờ", "r"]], ["s", "et-si", ["ét-sì", "s"]]]],
+  ["t-v", "T–V", [["t", "te", ["tê", "t"]], ["v", "ve", ["vê", "v"]]]],
+  ["x", "X", [["x", "ich-xi", ["ích-xì", "x"]]]]
 ];
 
 const toneMarks: readonly RawGroup[] = [

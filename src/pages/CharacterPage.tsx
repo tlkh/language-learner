@@ -11,9 +11,9 @@ import { db, getCharacterMasteryMap, latestIncompleteCharacterSession, type Char
 const itemIdsForGroups = (groups: Array<{ itemIds: string[] }>) => Array.from(new Set(groups.flatMap((group) => group.itemIds)));
 
 const pronunciationGuides: Record<string, string> = {
-  vi: "The large symbol is the written unit. Letter name tells you what to call it; Pronunciation (IPA) tells you its usual sound. Some consonants vary by region.",
-  th: "The large symbol is the written unit. Letter name is its traditional mnemonic name; Initial sound and Final sound show how it is pronounced at the start or end of a syllable. Text before · is romanization; /slashes/ show IPA.",
-  id: "The large symbol is the written unit. Letter name tells you what to call it; Pronunciation (IPA) tells you its usual sound in a word."
+  vi: "The large symbol is the written unit. Letter name uses an ASCII romanization of the official Vietnamese name; Pronunciation hint gives a close English approximation. Some consonants vary by region.",
+  th: "The large symbol is the written unit. Letter name uses the common romanized Thai mnemonic name; Initial sound hint and Final sound hint compare its syllable sounds with familiar English words.",
+  id: "The large symbol is the written unit. Letter name uses the official Indonesian romanized name; Pronunciation hint compares its usual sound with a familiar English word."
 };
 
 export function CharacterPage() {
