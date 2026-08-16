@@ -3,6 +3,24 @@ import type { CharacterCollection, CharacterCourse, CharacterGroup, CharacterIte
 type RawUnit = readonly [glyph: string, reading: string, aliases?: readonly string[]];
 type RawGroup = readonly [id: string, title: string, units: readonly RawUnit[]];
 
+const consonantSounds: Record<string, readonly [initial: string, final: string]> = {
+  "ก": ["k · /k/", "k · /k/"], "ข": ["kh · /kʰ/", "k · /k/"], "ฃ": ["kh · /kʰ/", "—"],
+  "ค": ["kh · /kʰ/", "k · /k/"], "ฅ": ["kh · /kʰ/", "—"], "ฆ": ["kh · /kʰ/", "k · /k/"],
+  "ง": ["ng · /ŋ/", "ng · /ŋ/"], "จ": ["ch · /tɕ/", "t · /t/"], "ฉ": ["ch · /tɕʰ/", "—"],
+  "ช": ["ch · /tɕʰ/", "t · /t/"], "ซ": ["s · /s/", "t · /t/"], "ฌ": ["ch · /tɕʰ/", "t · /t/"],
+  "ญ": ["y · /j/", "n · /n/"], "ฎ": ["d · /d/", "t · /t/"], "ฏ": ["t · /t/", "t · /t/"],
+  "ฐ": ["th · /tʰ/", "t · /t/"], "ฑ": ["th /tʰ/ or d /d/", "t · /t/"], "ฒ": ["th · /tʰ/", "t · /t/"],
+  "ณ": ["n · /n/", "n · /n/"], "ด": ["d · /d/", "t · /t/"], "ต": ["t · /t/", "t · /t/"],
+  "ถ": ["th · /tʰ/", "t · /t/"], "ท": ["th · /tʰ/", "t · /t/"], "ธ": ["th · /tʰ/", "t · /t/"],
+  "น": ["n · /n/", "n · /n/"], "บ": ["b · /b/", "p · /p/"], "ป": ["p · /p/", "p · /p/"],
+  "ผ": ["ph · /pʰ/", "—"], "ฝ": ["f · /f/", "—"], "พ": ["ph · /pʰ/", "p · /p/"],
+  "ฟ": ["f · /f/", "p · /p/"], "ภ": ["ph · /pʰ/", "p · /p/"], "ม": ["m · /m/", "m · /m/"],
+  "ย": ["y · /j/", "y glide · /j/"], "ร": ["r · /r/", "n · /n/"], "ล": ["l · /l/", "n /n/ (sometimes w /w/)"],
+  "ว": ["w · /w/", "w glide · /w/"], "ศ": ["s · /s/", "t · /t/"], "ษ": ["s · /s/", "t · /t/"],
+  "ส": ["s · /s/", "t · /t/"], "ห": ["h · /h/", "—"], "ฬ": ["l · /l/", "n · /n/"],
+  "อ": ["vowel carrier; glottal onset /ʔ/", "—"], "ฮ": ["h · /h/", "—"]
+};
+
 const consonants: readonly RawGroup[] = [
   ["ko", "ก ไก่", [["ก", "ko kai"]]], ["kho", "ข–ฃ–ค–ฅ–ฆ", [["ข", "kho khai"], ["ฃ", "kho khuat", ["obsolete"]], ["ค", "kho khwai"], ["ฅ", "kho khon", ["obsolete"]], ["ฆ", "kho rakhang"]]],
   ["ngo", "ง–จ", [["ง", "ngo ngu"], ["จ", "cho chan"]]], ["cho", "ฉ–ช–ซ–ฌ", [["ฉ", "cho ching"], ["ช", "cho chang"], ["ซ", "so so"], ["ฌ", "cho choe"]]],
@@ -25,11 +43,34 @@ const toneMarks: readonly RawGroup[] = [
 
 const items: CharacterItem[] = [];
 
+function referenceDetails(collectionId: string, groupId: string, glyph: string, reading: string) {
+  if (collectionId === "consonants") {
+    const [initial, final] = consonantSounds[glyph];
+    return [
+      { label: "Letter name", value: reading },
+      { label: "Initial sound", value: initial },
+      { label: "Final sound", value: final }
+    ];
+  }
+  if (collectionId === "vowels") {
+    const normalizedReading = reading.replace(/:$/, "");
+    const duration = groupId === "short" ? "short" : groupId === "long" || reading.endsWith(":") ? "long" : undefined;
+    return [{ label: "Pronunciation", value: duration ? `${normalizedReading} · ${duration}` : normalizedReading }];
+  }
+  const [markName, effect] = reading.split(" / ");
+  return [{ label: "Mark name", value: markName }, { label: "Effect", value: effect }];
+}
+
 function buildGroups(collectionId: string, sectionId: string, groups: readonly RawGroup[]): CharacterGroup[] {
   return groups.map(([groupId, title, units]) => {
     const itemIds = units.map(([glyph, reading, aliases], index) => {
       const id = `${collectionId}-${sectionId}-${groupId}-${index + 1}`;
-      items.push({ id, representations: { glyph, reading }, aliases: aliases?.length ? { reading: [...aliases] } : undefined });
+      items.push({
+        id,
+        representations: { glyph, reading },
+        aliases: aliases?.length ? { reading: [...aliases] } : undefined,
+        referenceDetails: referenceDetails(collectionId, groupId, glyph, reading)
+      });
       return id;
     });
     return { id: `${collectionId}-${sectionId}-${groupId}`, title, itemIds };

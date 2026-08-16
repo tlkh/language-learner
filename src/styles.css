@@ -1063,6 +1063,8 @@ html[data-language] .answer-input input[lang]:not([lang="en"]) { font-family: va
 .session-size-picker label { display: inline-flex; min-height: 2.75rem; align-items: center; gap: var(--space-xs); padding-inline: var(--space-sm); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-pill); cursor: pointer; }
 
 .character-reference > details { border-block-start: var(--rule-hair) solid var(--color-rule); }
+.character-reference__guide { display: grid; gap: var(--space-2xs); padding: var(--space-sm) var(--space-md); border-inline-start: 0.25rem solid var(--color-accent); border-radius: var(--radius-sm); background: var(--color-accent-soft); }
+.character-reference__guide span { max-width: 68ch; color: var(--color-muted); font-size: var(--text-sm); }
 .character-reference > details > summary { display: flex; min-height: 3.5rem; align-items: center; justify-content: space-between; cursor: pointer; font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; }
 .character-reference summary small { color: var(--color-muted); font-family: var(--font-body); font-size: var(--text-sm); font-weight: 500; }
 .character-reference details > section { display: grid; gap: var(--space-sm); padding-block: var(--space-sm) var(--space-lg); }
@@ -1070,10 +1072,17 @@ html[data-language] .answer-input input[lang]:not([lang="en"]) { font-family: va
 .character-reference__row { display: grid; gap: var(--space-xs); }
 .character-reference__row > strong { color: var(--color-muted); font-size: var(--text-sm); }
 .character-reference__row > div { display: grid; grid-template-columns: repeat(auto-fill, minmax(3.5rem, 1fr)); gap: var(--space-xs); }
-.character-reference__row span { display: grid; min-height: 4rem; place-items: center; padding: var(--space-xs); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-sm); background: var(--color-surface); }
-.character-reference__row span.is-mastered { border-color: var(--color-success); background: var(--color-success-soft); }
+.character-reference__row--detailed > div { grid-template-columns: repeat(auto-fill, minmax(min(8.5rem, 100%), 1fr)); }
+.character-reference__card { display: grid; min-height: 4rem; place-items: center; padding: var(--space-xs); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-sm); background: var(--color-surface); }
+.character-reference__card.is-mastered { border-color: var(--color-success); background: var(--color-success-soft); }
+.character-reference__card--detailed { min-height: 9.5rem; align-content: start; justify-items: stretch; gap: var(--space-sm); padding: var(--space-sm); }
 .character-reference__row b { font-size: var(--text-lg); }
 .character-reference__row small { color: var(--color-muted); font-size: var(--text-xs); }
+.character-reference__card--detailed > b { justify-self: center; font-size: var(--text-xl); }
+.character-reference__details { display: grid; gap: var(--space-xs); width: 100%; margin: 0; }
+.character-reference__details > div { display: grid; gap: 0.1rem; padding-block-start: var(--space-xs); border-block-start: var(--rule-hair) solid var(--color-rule); }
+.character-reference__details dt { color: var(--color-muted); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; line-height: 1.2; text-transform: uppercase; }
+.character-reference__details dd { margin: 0; overflow-wrap: anywhere; font-size: var(--text-sm); line-height: 1.35; }
 
 .character-practice-page { min-height: 100dvh; align-content: start; }
 .character-practice-header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-sm); padding-block: calc(var(--space-xs) + env(safe-area-inset-top)) var(--space-sm); }

@@ -52,6 +52,14 @@ describe("Vietnamese language pack", () => {
     expect(combined.map((item) => item.representations.glyph)).toEqual(["ch", "gh", "gi", "kh", "ng", "ngh", "nh", "ph", "qu", "th", "tr"]);
   });
 
+  it("separates each written unit's name from its pronunciation", () => {
+    const breveA = vietnamesePack.characterCourse.items.find((item) => item.representations.glyph === "ă")!;
+    expect(breveA.referenceDetails).toEqual([
+      { label: "Letter name", value: "ă" },
+      { label: "Pronunciation (IPA)", value: "/a/" }
+    ]);
+  });
+
   it("includes Vietnam's emergency numbers and tests meanings instead of pseudo-phonetics", () => {
     const phrases = vietnamesePack.sharedVocabularySets[0].vocabulary.map((entry) => entry.baseForm.representations.target);
     expect(phrases).toEqual(expect.arrayContaining([
@@ -105,6 +113,15 @@ describe("Thai language pack", () => {
     expect(thaiPack.quiz.grade(question, "ร้อน").status).toBe("correct");
     expect(thaiPack.quiz.grade(question, "รอน").status).not.toBe("correct");
   });
+
+  it("distinguishes consonant names from initial and final sounds", () => {
+    const koKai = thaiPack.characterCourse.items.find((item) => item.representations.glyph === "ก")!;
+    expect(koKai.referenceDetails).toEqual([
+      { label: "Letter name", value: "ko kai" },
+      { label: "Initial sound", value: "k · /k/" },
+      { label: "Final sound", value: "k · /k/" }
+    ]);
+  });
 });
 
 describe("Indonesian language pack", () => {
@@ -134,6 +151,14 @@ describe("Indonesian language pack", () => {
     const question = indonesianPack.quiz.generate(topic, { languageCode: "id", topicId: topic.id, tierId: "word-recall", variantId: "standard", seed: 1, count: 24 })
       .find((item) => item.canonicalAnswer === "nama")!;
     expect(indonesianPack.quiz.grade(question, "NAMA").status).toBe("correct");
+  });
+
+  it("labels letter names separately from IPA pronunciation", () => {
+    const c = indonesianPack.characterCourse.items.find((item) => item.representations.glyph === "c")!;
+    expect(c.referenceDetails).toEqual([
+      { label: "Letter name", value: "ce" },
+      { label: "Pronunciation (IPA)", value: "/tʃ/" }
+    ]);
   });
 });
 

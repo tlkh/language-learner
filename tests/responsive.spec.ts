@@ -13,7 +13,7 @@ for (const viewport of [{ name: "phone", width: 390, height: 844 }, { name: "des
 
 test("character practice adapts one session from a phone card to a desktop grid", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/#/ja/characters");
+  await page.goto("/#/ja/characters?tab=practice");
   await expect(page.getByRole("heading", { level: 1, name: "Kana", exact: true })).toBeVisible();
   await page.getByRole("radio", { name: "10", exact: true }).check();
   await page.getByRole("button", { name: /Start recognition practice/ }).click();

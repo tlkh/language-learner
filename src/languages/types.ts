@@ -184,6 +184,7 @@ export interface CharacterItem {
   id: string;
   representations: Record<RepresentationId, string>;
   aliases?: Partial<Record<RepresentationId, string[]>>;
+  referenceDetails?: Array<{ label: string; value: string }>;
 }
 
 export interface CharacterGroup {

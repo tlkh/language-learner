@@ -129,6 +129,10 @@ function validatePack(pack: LanguagePack) {
   unique(course.drillModes.map((item) => item.id), `${prefix} character modes`);
   const representationIds = new Set(pack.representations.map((item) => item.id));
   const itemIds = new Set(course.items.map((item) => item.id));
+  for (const item of course.items) for (const detail of item.referenceDetails ?? []) {
+    if (!detail.label.trim()) errors.push(`${prefix} ${item.id}: empty character reference label`);
+    if (!detail.value?.trim()) errors.push(`${prefix} ${item.id}: empty character reference value for ${detail.label}`);
+  }
   const hierarchyIds: string[] = [];
   const sectionIds: string[] = [];
   const groupIds: string[] = [];

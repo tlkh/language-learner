@@ -3,6 +3,14 @@ import type { CharacterCollection, CharacterCourse, CharacterGroup, CharacterIte
 type RawUnit = readonly [glyph: string, reading: string, aliases?: readonly string[]];
 type RawGroup = readonly [id: string, title: string, units: readonly RawUnit[]];
 
+const pronunciations: Record<string, string> = {
+  a: "/a/", e: "/ə/, /e/, or /ɛ/", i: "/i/", o: "/o/ or /ɔ/", u: "/u/",
+  b: "/b/", c: "/tʃ/", d: "/d/", f: "/f/", g: "/ɡ/", h: "/h/", j: "/dʒ/",
+  k: "/k/", l: "/l/", m: "/m/", n: "/n/", p: "/p/", q: "/k/", r: "/r/",
+  s: "/s/", t: "/t/", v: "/f/ or /v/ in loanwords", w: "/w/", x: "/ks/; often /s/ initially",
+  y: "/j/", z: "/z/", ng: "/ŋ/", ny: "/ɲ/", kh: "/x/", sy: "/ʃ/"
+};
+
 const vowels: readonly RawGroup[] = [["vowels", "Vowels", [["a", "a"], ["e", "e"], ["i", "i"], ["o", "o"], ["u", "u"]]]];
 const consonants: readonly RawGroup[] = [["b-c", "B–C", [["b", "be"], ["c", "ce"]]], ["d-f", "D–F", [["d", "de"], ["f", "ef"]]], ["g-j", "G–J", [["g", "ge"], ["h", "ha"], ["j", "je"]]], ["k-m", "K–M", [["k", "ka"], ["l", "el"], ["m", "em"]]], ["n-p", "N–P", [["n", "en"], ["p", "pe"]]], ["q-s", "Q–S", [["q", "ki"], ["r", "er"], ["s", "es"]]], ["t-w", "T–W", [["t", "te"], ["v", "ve"], ["w", "we"]]], ["x-z", "X–Z", [["x", "eks"], ["y", "ye"], ["z", "zet"]]]];
 const digraphs: readonly RawGroup[] = [["common", "Common Indonesian digraphs", [["ng", "eng", ["ŋ"]], ["ny", "enye", ["ñ"]], ["kh", "kha"], ["sy", "sya"]]]];
@@ -12,7 +20,15 @@ function buildGroups(collectionId: string, sectionId: string, groups: readonly R
   return groups.map(([groupId, title, units]) => {
     const itemIds = units.map(([glyph, reading, aliases], index) => {
       const id = `${collectionId}-${sectionId}-${groupId}-${index + 1}`;
-      items.push({ id, representations: { glyph, reading }, aliases: aliases?.length ? { reading: [...aliases] } : undefined });
+      items.push({
+        id,
+        representations: { glyph, reading },
+        aliases: aliases?.length ? { reading: [...aliases] } : undefined,
+        referenceDetails: [
+          { label: collectionId === "digraphs" ? "Digraph name" : "Letter name", value: reading },
+          { label: "Pronunciation (IPA)", value: pronunciations[glyph] }
+        ]
+      });
       return id;
     });
     return { id: `${collectionId}-${sectionId}-${groupId}`, title, itemIds };

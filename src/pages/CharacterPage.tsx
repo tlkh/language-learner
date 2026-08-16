@@ -5,9 +5,16 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { selectCharacterItems, type CharacterSessionSize } from "../characters/engine";
 import { ScreenHeader } from "../components/ScreenHeader";
 import { useLanguagePack } from "../languages/LanguagePackContext";
+import type { CharacterItem, RepresentationId } from "../languages/types";
 import { db, getCharacterMasteryMap, latestIncompleteCharacterSession, type CharacterSessionRecord } from "../storage/db";
 
 const itemIdsForGroups = (groups: Array<{ itemIds: string[] }>) => Array.from(new Set(groups.flatMap((group) => group.itemIds)));
+
+const pronunciationGuides: Record<string, string> = {
+  vi: "The large symbol is the written unit. Letter name tells you what to call it; Pronunciation (IPA) tells you its usual sound. Some consonants vary by region.",
+  th: "The large symbol is the written unit. Letter name is its traditional mnemonic name; Initial sound and Final sound show how it is pronounced at the start or end of a syllable. Text before · is romanization; /slashes/ show IPA.",
+  id: "The large symbol is the written unit. Letter name tells you what to call it; Pronunciation (IPA) tells you its usual sound in a word."
+};
 
 export function CharacterPage() {
   const { pack, indexes } = useLanguagePack();
@@ -76,7 +83,12 @@ export function CharacterPage() {
       {activeTab === "reference" ? (
         <section className="character-reference" aria-labelledby="character-reference-title">
           <div className="section-heading"><div><h2 id="character-reference-title">{course.navLabel} table & pronunciation</h2><p>Browse every character with its pack-authored pronunciation before practicing.</p></div></div>
-          {course.collections.map((collection) => <details key={collection.id} open><summary>{collection.title}<small>{collectionIdsCount(collection.sections)} units</small></summary>{collection.sections.map((section) => <section key={section.id}><h3>{section.title}</h3>{section.groups.map((group) => <div className="character-reference__row" key={group.id}><strong>{group.title}</strong><div>{group.itemIds.map((itemId) => { const item = indexes.characters.get(itemId); return item ? <span key={itemId} className={data?.mastery.get(itemId)?.mastered ? "is-mastered" : undefined}><b lang={pack.locale}>{item.representations[mode.promptRepresentationId]}</b><small>{item.representations[mode.answerRepresentationId]}</small></span> : null; })}</div></div>)}</section>)}</details>)}
+          {pronunciationGuides[pack.code] ? <p className="character-reference__guide"><strong>How to read each card</strong><span>{pronunciationGuides[pack.code]}</span></p> : null}
+          {course.collections.map((collection) => <details key={collection.id} open><summary>{collection.title}<small>{collectionIdsCount(collection.sections)} units</small></summary>{collection.sections.map((section) => <section key={section.id}><h3>{section.title}</h3>{section.groups.map((group) => {
+            const items = group.itemIds.map((itemId) => indexes.characters.get(itemId)).filter((item): item is CharacterItem => Boolean(item));
+            const hasDetails = items.some((item) => item.referenceDetails?.length);
+            return <div className={`character-reference__row${hasDetails ? " character-reference__row--detailed" : ""}`} key={group.id}><strong>{group.title}</strong><div>{items.map((item) => <CharacterReferenceCard key={item.id} item={item} locale={pack.locale} promptRepresentationId={mode.promptRepresentationId} answerRepresentationId={mode.answerRepresentationId} mastered={Boolean(data?.mastery.get(item.id)?.mastered)} />)}</div></div>;
+          })}</section>)}</details>)}
         </section>
       ) : (
         <div className="character-practice-sets">
@@ -113,6 +125,21 @@ export function CharacterPage() {
       )}
     </div>
   );
+}
+
+function CharacterReferenceCard({ item, locale, promptRepresentationId, answerRepresentationId, mastered }: {
+  item: CharacterItem;
+  locale: string;
+  promptRepresentationId: RepresentationId;
+  answerRepresentationId: RepresentationId;
+  mastered: boolean;
+}) {
+  const className = `character-reference__card${item.referenceDetails?.length ? " character-reference__card--detailed" : ""}${mastered ? " is-mastered" : ""}`;
+  if (!item.referenceDetails?.length) return <span className={className}><b lang={locale}>{item.representations[promptRepresentationId]}</b><small>{item.representations[answerRepresentationId]}</small></span>;
+  return <article className={className}>
+    <b lang={locale}>{item.representations[promptRepresentationId]}</b>
+    <dl className="character-reference__details">{item.referenceDetails.map((detail) => <div key={detail.label}><dt>{detail.label}</dt><dd>{detail.value}</dd></div>)}</dl>
+  </article>;
 }
 
 function collectionIdsCount(sections: Array<{ groups: Array<{ itemIds: string[] }> }>) {

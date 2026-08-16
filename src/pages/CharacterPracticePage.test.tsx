@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { LanguagePackProvider } from "../languages/LanguagePackContext";
 import { japanesePack } from "../languages/ja/japanese";
+import type { LanguagePack } from "../languages/types";
+import { vietnamesePack } from "../languages/vi/vietnamese";
 import { AppStateProvider } from "../state/AppState";
 import { db, type CharacterSessionRecord } from "../storage/db";
 import { CharacterPage } from "./CharacterPage";
@@ -23,11 +25,11 @@ const makeSession = (overrides: Partial<CharacterSessionRecord> = {}): Character
   ...overrides
 });
 
-const renderRoute = (initial: string) => render(
-  <AppStateProvider><LanguagePackProvider pack={japanesePack}><MemoryRouter initialEntries={[initial]}><Routes>
-    <Route path="/ja/characters" element={<CharacterPage />} />
-    <Route path="/ja/characters/practice/:sessionId" element={<CharacterPracticePage />} />
-    <Route path="/ja/characters/results/:sessionId" element={<CharacterResultsPage />} />
+const renderRoute = (initial: string, pack: LanguagePack = japanesePack) => render(
+  <AppStateProvider><LanguagePackProvider pack={pack}><MemoryRouter initialEntries={[initial]}><Routes>
+    <Route path="/:languageCode/characters" element={<CharacterPage />} />
+    <Route path="/:languageCode/characters/practice/:sessionId" element={<CharacterPracticePage />} />
+    <Route path="/:languageCode/characters/results/:sessionId" element={<CharacterResultsPage />} />
   </Routes></MemoryRouter></LanguagePackProvider></AppStateProvider>
 );
 
@@ -48,6 +50,16 @@ describe("character practice UI", () => {
     expect(await screen.findByRole("heading", { name: "Build a practice set" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Practice sets" })).toHaveAttribute("aria-current", "page");
     expect(screen.queryByRole("heading", { name: "Kana table & pronunciation" })).not.toBeInTheDocument();
+  });
+
+  it("labels Vietnamese letter names and pronunciations instead of repeating an unexplained character", () => {
+    renderRoute("/vi/characters", vietnamesePack);
+
+    expect(screen.getByText("How to read each card")).toBeInTheDocument();
+    expect(screen.getAllByText("Letter name").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Pronunciation (IPA)").length).toBeGreaterThan(0);
+    expect(screen.getByText("/aː/")).toBeInTheDocument();
+    expect(screen.getByText("/a/")).toBeInTheDocument();
   });
 
   it("withholds wrong answers, keeps the card retryable, and locks it after recall", async () => {

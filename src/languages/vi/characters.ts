@@ -3,6 +3,76 @@ import type { CharacterCollection, CharacterCourse, CharacterGroup, CharacterIte
 type RawUnit = readonly [glyph: string, reading: string, aliases?: readonly string[]];
 type RawGroup = readonly [id: string, title: string, units: readonly RawUnit[]];
 
+const alphabetPronunciations: Record<string, string> = {
+  a: "/aː/",
+  "ă": "/a/",
+  "â": "/ə/",
+  e: "/ɛ/",
+  "ê": "/e/",
+  i: "/i/",
+  o: "/ɔ/",
+  "ô": "/o/",
+  "ơ": "/əː/",
+  u: "/u/",
+  "ư": "/ɯ/",
+  y: "/i/",
+  b: "/ɓ/",
+  c: "/k/",
+  d: "/z/ (North), /j/ (South)",
+  "đ": "/ɗ/",
+  g: "/ɣ/",
+  h: "/h/",
+  k: "/k/",
+  l: "/l/",
+  m: "/m/",
+  n: "/n/",
+  p: "/p/ (mainly final or in loanwords)",
+  q: "/k/ (normally in qu /kw/)",
+  r: "/z/ (North), /r/ (South)",
+  s: "/s/ (North), /ʂ/ (South)",
+  t: "/t/",
+  v: "/v/",
+  x: "/s/"
+};
+
+const toneContours: Record<string, string> = {
+  ngang: "mid and level",
+  "sắc": "rising",
+  "huyền": "low and falling",
+  "hỏi": "dipping",
+  "ngã": "broken and rising",
+  "nặng": "low and constricted"
+};
+
+const combinedPronunciations: Record<string, string> = {
+  ch: "/c/ initially; /k/ finally",
+  gh: "/ɣ/",
+  gi: "/z/ (North), /j/ (South)",
+  kh: "/x/",
+  ng: "/ŋ/",
+  ngh: "/ŋ/",
+  nh: "/ɲ/ initially; /ŋ/ finally",
+  ph: "/f/",
+  qu: "/kw/",
+  th: "/tʰ/",
+  tr: "/tɕ/ (North), /ʈ/ (South)"
+};
+
+const referenceDetails = (collectionId: string, glyph: string, reading: string) => {
+  if (collectionId === "alphabet") return [
+    { label: "Letter name", value: reading },
+    { label: "Pronunciation (IPA)", value: alphabetPronunciations[glyph] }
+  ];
+  if (collectionId === "tones") return [
+    { label: "Tone name", value: reading },
+    { label: "Typical contour", value: toneContours[reading] }
+  ];
+  return [
+    { label: "Example word", value: reading },
+    { label: "Pronunciation (IPA)", value: combinedPronunciations[glyph] }
+  ];
+};
+
 const vowels: readonly RawGroup[] = [
   ["a", "A", [["a", "a"], ["ă", "ă"], ["â", "â"]]],
   ["e", "E", [["e", "e"], ["ê", "ê"]]],
@@ -52,7 +122,8 @@ function buildGroups(collectionId: string, sectionId: string, groups: readonly R
       items.push({
         id,
         representations: { glyph, reading },
-        aliases: aliases?.length ? { reading: [...aliases] } : undefined
+        aliases: aliases?.length ? { reading: [...aliases] } : undefined,
+        referenceDetails: referenceDetails(collectionId, glyph, reading)
       });
       return id;
     });
