@@ -37,6 +37,19 @@ afterEach(async () => {
 });
 
 describe("character practice UI", () => {
+  it("separates the pronunciation table from practice-set controls", async () => {
+    renderRoute("/ja/characters");
+
+    expect(screen.getByRole("link", { name: "Kana & pronunciation" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("heading", { name: "Kana table & pronunciation" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Build a practice set" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("link", { name: "Practice sets" }));
+    expect(await screen.findByRole("heading", { name: "Build a practice set" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Practice sets" })).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByRole("heading", { name: "Kana table & pronunciation" })).not.toBeInTheDocument();
+  });
+
   it("withholds wrong answers, keeps the card retryable, and locks it after recall", async () => {
     await db.characterSessions.put(makeSession());
     renderRoute("/ja/characters/practice/character-session");
@@ -72,7 +85,7 @@ describe("character practice UI", () => {
 
   it("resumes incomplete sessions and can retry only weak result cards", async () => {
     await db.characterSessions.put(makeSession());
-    renderRoute("/ja/characters");
+    renderRoute("/ja/characters?tab=practice");
     expect(await screen.findByRole("heading", { name: "Continue character practice" })).toBeInTheDocument();
     cleanup();
 

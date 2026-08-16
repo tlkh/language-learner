@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
+import { MandatoryUpdateGate } from "../components/MandatoryUpdateGate";
 import { LanguageSelectorPage } from "./LanguageSelectorPage";
 
 const pwaState = vi.hoisted(() => ({
@@ -13,7 +14,7 @@ const pwaState = vi.hoisted(() => ({
 vi.mock("../pwa/PwaState", () => ({ usePwaState: () => pwaState }));
 
 function renderSelector() {
-  return render(<MemoryRouter><LanguageSelectorPage /></MemoryRouter>);
+  return render(<MemoryRouter><MandatoryUpdateGate><LanguageSelectorPage /></MandatoryUpdateGate></MemoryRouter>);
 }
 
 afterEach(() => {
@@ -25,7 +26,7 @@ afterEach(() => {
   pwaState.update.mockResolvedValue();
 });
 
-describe("Language selector update gate", () => {
+describe("Mandatory update gate", () => {
   it("checks for an app update every time the selector loads", async () => {
     renderSelector();
 
@@ -44,6 +45,19 @@ describe("Language selector update gate", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Update and continue" }));
     await waitFor(() => expect(pwaState.update).toHaveBeenCalledTimes(1));
     expect(screen.getByRole("button", { name: "Updating…" })).toBeDisabled();
+  });
+
+  it("replaces any language page when an update is required", async () => {
+    pwaState.needRefresh = true;
+    render(
+      <MemoryRouter initialEntries={["/ja/topics"]}>
+        <MandatoryUpdateGate><main>Topic content</main></MandatoryUpdateGate>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole("heading", { name: "A new version is ready" })).toBeInTheDocument();
+    expect(screen.queryByText("Topic content")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Dismiss update" })).not.toBeInTheDocument();
   });
 
   it("keeps the mandatory gate open and offers a retry when updating fails", async () => {

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { HashRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { AppNav } from "./components/AppNav";
+import { MandatoryUpdateGate } from "./components/MandatoryUpdateGate";
 import { PwaNotice } from "./components/PwaNotice";
 import { ProgressResetNotice } from "./components/ProgressResetNotice";
 import { RouteTransition } from "./components/RouteTransition";
@@ -68,30 +69,32 @@ export default function App() {
     <AppStateProvider>
       <PwaStateProvider>
         <HashRouter>
-          <Routes>
-            <Route path="/" element={<RootFrame />} />
-            <Route path="/:languageCode" element={<LanguagePackRoute />}>
-              <Route element={<AppFrame />}>
-                <Route index element={<Navigate to="learn" replace />} />
-                <Route path="learn" element={<LearnPage />} />
-                <Route path="characters" element={<CharacterPage />} />
-                <Route path="characters/practice/:sessionId" element={<CharacterPracticePage />} />
-                <Route path="characters/results/:sessionId" element={<CharacterResultsPage />} />
-                <Route path="topics" element={<TopicsPage />} />
-                <Route path="phrases" element={<PhraseKitPage />} />
-                <Route path="phrases/study" element={<VocabularyStudyPage source="phrases" />} />
-                <Route path="phrases/quiz" element={<QuizPage source="phrases" />} />
-                <Route path="topic/:topicId" element={<TopicPage />} />
-                <Route path="topic/:topicId/scene/:sceneId" element={<TopicPage />} />
-                <Route path="topic/:topicId/study" element={<VocabularyStudyPage />} />
-                <Route path="topic/:topicId/quiz/:tierId" element={<QuizPage />} />
-                <Route path="results/:sessionId" element={<ResultsPage />} />
-                <Route path="progress" element={<ProgressPage />} />
-                <Route path="settings" element={<SettingsPage />} />
+          <MandatoryUpdateGate>
+            <Routes>
+              <Route path="/" element={<RootFrame />} />
+              <Route path="/:languageCode" element={<LanguagePackRoute />}>
+                <Route element={<AppFrame />}>
+                  <Route index element={<Navigate to="learn" replace />} />
+                  <Route path="learn" element={<LearnPage />} />
+                  <Route path="characters" element={<CharacterPage />} />
+                  <Route path="characters/practice/:sessionId" element={<CharacterPracticePage />} />
+                  <Route path="characters/results/:sessionId" element={<CharacterResultsPage />} />
+                  <Route path="topics" element={<TopicsPage />} />
+                  <Route path="phrases" element={<PhraseKitPage />} />
+                  <Route path="phrases/study" element={<VocabularyStudyPage source="phrases" />} />
+                  <Route path="phrases/quiz" element={<QuizPage source="phrases" />} />
+                  <Route path="topic/:topicId" element={<TopicPage />} />
+                  <Route path="topic/:topicId/scene/:sceneId" element={<TopicPage />} />
+                  <Route path="topic/:topicId/study" element={<VocabularyStudyPage />} />
+                  <Route path="topic/:topicId/quiz/:tierId" element={<QuizPage />} />
+                  <Route path="results/:sessionId" element={<ResultsPage />} />
+                  <Route path="progress" element={<ProgressPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                </Route>
               </Route>
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </MandatoryUpdateGate>
         </HashRouter>
       </PwaStateProvider>
     </AppStateProvider>

@@ -997,7 +997,7 @@ html[data-language] .answer-input input[lang]:not([lang="en"]) { font-family: va
 
 .app--selector { display: grid; min-height: 100dvh; place-items: center; }
 .language-selector-page { display: grid; width: min(100%, 50rem); gap: var(--space-xl); padding: clamp(var(--space-lg), 6vw, var(--space-3xl)) clamp(var(--space-md), 6vw, var(--space-xl)); }
-.language-selector-page--update { min-height: 100dvh; place-content: center; }
+.language-selector-page--update { min-height: 100dvh; margin-inline: auto; place-content: center; }
 .language-selector-hero { display: grid; max-width: 42rem; gap: var(--space-sm); }
 .language-selector-hero > p:last-child { max-width: 54ch; color: var(--color-muted); }
 .language-selector-mark { display: grid; width: 3.5rem; height: 3.5rem; place-items: center; border-radius: var(--radius-lg); background: var(--color-ink); color: var(--color-paper); }
@@ -1038,6 +1038,7 @@ html[data-language] .answer-input input[lang]:not([lang="en"]) { font-family: va
 .character-summary > svg { width: var(--text-lg); height: var(--text-lg); color: var(--color-success); }
 .character-summary > div { display: grid; }
 .character-summary span { color: var(--color-muted); font-size: var(--text-sm); }
+.character-practice-sets { display: grid; gap: var(--space-lg); }
 .character-builder,
 .character-reference,
 .character-matrices,
