@@ -41,6 +41,16 @@ Add lightweight selector metadata and a dynamic import in `src/languages/registr
 
 The catalog must remain lightweight. Do not statically import pack content there. Vite emits each pack as a separate chunk; the PWA precache includes every registered chunk so installed packs remain available offline.
 
+## Recommended authoring workflow
+
+1. Create the pack folder and keep all language-specific modules below `src/languages/<code>`.
+2. Implement the pack contract with a small fixture before importing the full curriculum. Start with one topic, one tier, one speech variant, and one character drill mode.
+3. Add the pack to `src/languages/registry.ts` only after the fixture and generic validator pass. Keep the registry entry metadata-only apart from its dynamic loader.
+4. Expand topics, scenes, vocabulary, quiz generation, and the character hierarchy in small batches. Add pack-specific tests for normalization and any orthographic distinctions that the generic tests cannot express.
+5. Run all acceptance commands before opening a pull request. Do not rely on the TypeScript compiler alone: the content validator exercises generated sessions and cross-references that compile successfully even when the data is incomplete.
+
+The pack is compiled into the application; adding or changing content requires a new application build. A language pack is not downloaded at runtime and cannot be installed independently by an end user.
+
 ## Required contract
 
 `LanguagePack` is defined in `src/languages/types.ts`. A pack provides:
@@ -292,6 +302,10 @@ The registry-wide validator checks IDs, locales, representations, hierarchy refe
 - 10, 20, all, and fewer-available character selection;
 - wrong-answer retry, answer withholding, early finish, resumability, results, and three-clean-recall mastery;
 - phone and desktop selector and practice layouts.
+
+Run `npm run validate:content` after every registry or curriculum change. Run `npm test` for pack, engine, storage, and page behavior, then run `npm run test:responsive` when selector, practice, navigation, or responsive content changes. The production `npm run build` repeats content validation before compiling the application and service-worker precache.
+
+For a new pack, inspect the generated build output once to confirm that its dynamic chunk is present and that the pack loads after an offline reload. Use the app's Settings screen to verify that progress reset behavior remains language-scoped; never use a reset as a substitute for a storage migration when changing released IDs.
 
 ## Authoring checklist
 
