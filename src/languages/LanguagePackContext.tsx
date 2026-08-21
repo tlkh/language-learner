@@ -46,7 +46,9 @@ export function LanguagePackRoute() {
 
   if (!catalogEntry) return <Navigate to={`/?unknown=${encodeURIComponent(languageCode ?? "")}`} replace />;
   if (error) return <Navigate to={`/?error=${encodeURIComponent(catalogEntry.code)}`} replace />;
-  if (!pack) return <div className="page route-loading" role="status"><span className="spinner" /> Loading language pack…</div>;
+  if (!pack || pack.code !== catalogEntry.code) {
+    return <div className="page route-loading" role="status"><span className="spinner" /> Loading language pack…</div>;
+  }
 
   return <LanguagePackProvider pack={pack}><Outlet /></LanguagePackProvider>;
 }
@@ -62,9 +64,25 @@ export function LanguagePackProvider({ pack, children }: PropsWithChildren<{ pac
       delete document.documentElement.dataset.language;
     };
   }, [pack]);
+  useEffect(() => {
+    if (pack.presentation.speechVariantMode !== "primary-with-reference") return;
+    try {
+      const stored = JSON.parse(localStorage.getItem("ll-speech-variants") ?? "{}") as Record<string, string>;
+      if (stored[pack.code]) {
+        delete stored[pack.code];
+        localStorage.setItem("ll-speech-variants", JSON.stringify(stored));
+      }
+      if (pack.code === "ja") localStorage.removeItem("ll-register");
+    } catch {
+      localStorage.removeItem("ll-speech-variants");
+    }
+    void db.preferences.delete(`language:${pack.code}:speechVariant`);
+  }, [pack.code, pack.presentation.speechVariantMode]);
   const indexes = useMemo(() => buildPackIndexes(pack), [pack]);
   const storedVariant = appState.speechVariantByLanguage[pack.code];
-  const variantId = pack.speechVariants.some((variant) => variant.id === storedVariant)
+  const variantId = pack.presentation.speechVariantMode === "primary-with-reference"
+    ? pack.defaultSpeechVariantId
+    : pack.speechVariants.some((variant) => variant.id === storedVariant)
     ? storedVariant
     : pack.defaultSpeechVariantId;
   const value: LanguagePackContextValue = {

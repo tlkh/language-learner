@@ -275,19 +275,20 @@ export function VocabularyStudyPage({ source = "topic" }: { source?: "topic" | "
   const target = form.representations.target;
   const reading = form.representations.reading;
   const romanization = form.representations.romanization;
+  const kanaOnlySupport = pack.presentation.speechVariantMode === "primary-with-reference";
   const countLabel = mode === "focus" ? `${resolvedCount} / ${baseQueue.length}` : `${index + 1} / ${activeQueue.length}`;
   const countAria = mode === "focus"
     ? `${resolvedCount} of ${baseQueue.length} cards resolved`
     : `Card ${index + 1} of ${activeQueue.length}`;
 
   const front = (
-    <div className="study-card__face study-card__face--front" lang={pack.locale}>
+    <div className="study-card__face study-card__face--front">
       <span className="study-card__eyebrow">{pack.nativeName}</span>
-      <div className="study-card__term">
+      <div className="study-card__term" lang={pack.locale}>
         <strong>{target}</strong>
         {reading && reading !== target ? <span>{reading}</span> : null}
       </div>
-      <p>{definitions.target}</p>
+      <p lang="en">{kanaOnlySupport ? selectedScene?.description ?? topic?.description ?? "Recall the meaning before you flip the card." : definitions.target}</p>
       <span className="study-card__flip-hint"><RotateCw aria-hidden="true" /> Tap to flip</span>
     </div>
   );
@@ -299,9 +300,9 @@ export function VocabularyStudyPage({ source = "topic" }: { source?: "topic" | "
         <div><span>Word</span><strong lang={pack.locale}>{target}</strong></div>
         <div><span>Meaning</span><strong>{entry.meanings.join(" · ")}</strong></div>
         {reading ? <div><span>Reading</span><strong lang={pack.locale}>{reading}</strong></div> : null}
-        {romanization ? <div><span>Romanization</span><strong>{romanization}</strong></div> : null}
+        {romanization && !kanaOnlySupport ? <div><span>Romanization</span><strong>{romanization}</strong></div> : null}
       </div>
-      <div className="study-card__english-definition"><span>Definition</span><p>{definitions.source}</p></div>
+      <div className="study-card__english-definition"><span>{kanaOnlySupport ? "Scene note" : "Definition"}</span><p>{kanaOnlySupport ? selectedScene?.description ?? topic?.description ?? "A practical phrase for this situation." : definitions.source}</p></div>
       <span className="study-card__flip-hint"><RotateCw aria-hidden="true" /> Tap to see {pack.name}</span>
     </div>
   );

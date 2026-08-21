@@ -38,6 +38,7 @@ export function PwaStateProvider({ children }: PropsWithChildren) {
   });
 
   const checkForUpdate = useCallback(async () => {
+    if (import.meta.env.DEV) return false;
     const registration = await checkForAppUpdate(registrationRef.current);
     if (registration) registrationRef.current = registration;
     const required = Boolean(registration?.waiting);

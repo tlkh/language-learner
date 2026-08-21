@@ -1,12 +1,12 @@
 {
-  "date": "2026-08-15",
+  "date": "2026-08-21",
   "preEmitCritique": {
     "philosophy": 5,
     "hierarchy": 5,
     "execution": 5,
     "specificity": 5,
     "restraint": 5,
-    "variety": 4
+    "variety": 5
   },
   "slopTest": {
     "gates": 58,
@@ -20,8 +20,8 @@
     "honestCopy": "pass (46)",
     "redrawnChrome": "pass (47)",
     "tokens": "pass (48)",
-    "responsive": "pass (34, 49, 50–57) · compact speech-style control verified at 320, 375, 414, and 768 px",
-    "hierarchy": "pass (54) · redundant eyebrow labels removed; sequence and result context retained",
+    "responsive": "pass (34, 49, 50–57) · Japanese lesson, checkpoint, quiz, kana, settings, and cross-language routes verified at 320, 375, 414, and 768 px",
+    "hierarchy": "pass (54) · scenes lead study, polite production stays primary, and casual equivalents remain subordinate recognition notes",
     "icons": "pass (30)"
   },
   "animationReview": {

@@ -127,6 +127,7 @@ export interface CharacterMasteryRecord {
 
 export const SHARED_MASTERY_TOPIC_ID = "__shared__";
 export const MODULAR_PROGRESS_RESET_KEY = "modularProgressResetPending";
+export const JAPANESE_CONTENT_RESET_KEY = "japaneseContentResetPending";
 
 export class LanguageLearnerDatabase extends Dexie {
   preferences!: EntityTable<PreferenceRecord, "key">;
@@ -176,6 +177,30 @@ export class LanguageLearnerDatabase extends Dexie {
       characterSessions: "&id, languageCode, courseId, drillModeId, [languageCode+courseId+drillModeId], updatedAt",
       characterAttempts: "++id, sessionId, languageCode, courseId, drillModeId, itemId, answeredAt",
       characterMastery: "&id, languageCode, courseId, drillModeId, itemId, [languageCode+courseId+drillModeId], mastered, updatedAt"
+    });
+    this.version(7).stores({
+      preferences: "&key",
+      mastery: "&id, languageCode, topicId, sourceId, tierId, variantId, [languageCode+topicId+tierId+variantId], [languageCode+sourceId+tierId+variantId], confidence, updatedAt",
+      attempts: "++id, sessionId, languageCode, topicId, sourceId, tierId, variantId, answeredAt",
+      sessions: "&id, languageCode, topicId, tierId, variantId, [languageCode+topicId+tierId+variantId], updatedAt",
+      tierProgress: "&id, languageCode, topicId, tierId, variantId, [languageCode+topicId+tierId+variantId], passed, bestScore",
+      studyProgress: "&id, languageCode, scopeId, sourceId, [languageCode+scopeId], [languageCode+sourceId], updatedAt",
+      characterSessions: "&id, languageCode, courseId, drillModeId, [languageCode+courseId+drillModeId], updatedAt",
+      characterAttempts: "++id, sessionId, languageCode, courseId, drillModeId, itemId, answeredAt",
+      characterMastery: "&id, languageCode, courseId, drillModeId, itemId, [languageCode+courseId+drillModeId], mastered, updatedAt"
+    }).upgrade(async (transaction) => {
+      await Promise.all([
+        transaction.table("mastery").where("languageCode").equals("ja").delete(),
+        transaction.table("attempts").where("languageCode").equals("ja").delete(),
+        transaction.table("sessions").where("languageCode").equals("ja").delete(),
+        transaction.table("tierProgress").where("languageCode").equals("ja").delete(),
+        transaction.table("studyProgress").where("languageCode").equals("ja").delete(),
+        transaction.table("characterSessions").where("languageCode").equals("ja").delete(),
+        transaction.table("characterAttempts").where("languageCode").equals("ja").delete(),
+        transaction.table("characterMastery").where("languageCode").equals("ja").delete(),
+        transaction.table("preferences").delete("language:ja:speechVariant")
+      ]);
+      await transaction.table("preferences").put({ key: JAPANESE_CONTENT_RESET_KEY, value: "2" });
     });
   }
 }

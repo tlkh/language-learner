@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { RegisterSwitch } from "../components/RegisterSwitch";
-import { LanguagePackProvider } from "../languages/LanguagePackContext";
+import { LanguagePackProvider, useLanguagePack } from "../languages/LanguagePackContext";
 import { japanesePack } from "../languages/ja/japanese";
 import { db } from "../storage/db";
 import { AppStateProvider } from "./AppState";
@@ -49,16 +49,15 @@ describe("system appearance", () => {
 
 describe("global register preference", () => {
   const renderSwitch = (compact = false) => render(<AppStateProvider><LanguagePackProvider pack={japanesePack}><RegisterSwitch compact={compact} /></LanguagePackProvider></AppStateProvider>);
+  const selectablePack = { ...japanesePack, presentation: { ...japanesePack.presentation, speechVariantMode: "selectable" as const } };
 
-  it("uses compact Japanese labels without changing the accessible names", () => {
+  it("hides the Japanese register switch because polite language is the teaching target", () => {
     renderSwitch(true);
-    expect(screen.getByRole("button", { name: /formal/i })).toHaveTextContent("丁寧");
-    expect(screen.getByRole("button", { name: /casual/i })).toHaveTextContent("普通");
-    expect(screen.queryByText("カジュアル")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /formal|casual/i })).not.toBeInTheDocument();
   });
 
-  it("persists an informal selection locally and in IndexedDB", async () => {
-    renderSwitch();
+  it("keeps the reusable switch behavior for selectable language packs", async () => {
+    render(<AppStateProvider><LanguagePackProvider pack={selectablePack}><RegisterSwitch /></LanguagePackProvider></AppStateProvider>);
     const casual = screen.getByRole("button", { name: /casual/i });
     fireEvent.click(casual);
     expect(casual).toHaveAttribute("aria-pressed", "true");
@@ -66,9 +65,15 @@ describe("global register preference", () => {
     await waitFor(async () => expect((await db.preferences.get("language:ja:speechVariant"))?.value).toBe("informal"));
   });
 
-  it("restores the register on a new provider launch", () => {
+  it("clears a legacy Japanese casual selection and exposes the polite variant", async () => {
+    const ActiveVariant = () => <span>{useLanguagePack().variantId}</span>;
     localStorage.setItem("ll-register", "informal");
-    renderSwitch();
-    expect(screen.getByRole("button", { name: /casual/i })).toHaveAttribute("aria-pressed", "true");
+    localStorage.setItem("ll-speech-variants", JSON.stringify({ ja: "informal" }));
+    await db.preferences.put({ key: "language:ja:speechVariant", value: "informal" });
+    render(<AppStateProvider><LanguagePackProvider pack={japanesePack}><ActiveVariant /></LanguagePackProvider></AppStateProvider>);
+    expect(screen.getByText("formal")).toBeInTheDocument();
+    expect(localStorage.getItem("ll-register")).toBeNull();
+    expect(JSON.parse(localStorage.getItem("ll-speech-variants") ?? "{}")).toEqual({});
+    await waitFor(async () => expect(await db.preferences.get("language:ja:speechVariant")).toBeUndefined());
   });
 });

@@ -1,12 +1,11 @@
 import { RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from "react";
+import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
 import { useLocation } from "react-router-dom";
 import { usePwaState } from "../pwa/PwaState";
 
 export function MandatoryUpdateGate({ children }: PropsWithChildren) {
   const location = useLocation();
   const { checkForUpdate, needRefresh, online, update } = usePwaState();
-  const hasChecked = useRef(false);
   const [updating, setUpdating] = useState(false);
   const [updateFailed, setUpdateFailed] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(true);
@@ -24,11 +23,11 @@ export function MandatoryUpdateGate({ children }: PropsWithChildren) {
     }
   }, [checkForUpdate]);
 
+  const updateCheckKey = location.pathname === "/" ? location.key : "app";
+
   useEffect(() => {
-    if (hasChecked.current && location.pathname !== "/") return;
-    hasChecked.current = true;
     void runUpdateCheck();
-  }, [location.pathname, runUpdateCheck]);
+  }, [runUpdateCheck, updateCheckKey]);
 
   const applyRequiredUpdate = async () => {
     setUpdating(true);

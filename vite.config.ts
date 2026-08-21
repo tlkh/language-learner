@@ -13,6 +13,17 @@ function githubBase(): string {
 
 export default defineConfig({
   base: githubBase(),
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-motion": ["motion"],
+          "vendor-storage": ["dexie", "dexie-react-hooks"]
+        }
+      }
+    }
+  },
   plugins: [
     react(),
     VitePWA({
@@ -43,7 +54,7 @@ export default defineConfig({
         navigateFallback: "index.html",
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024
       },
-      devOptions: { enabled: true, navigateFallback: "index.html" }
+      devOptions: { enabled: false }
     })
   ]
 });

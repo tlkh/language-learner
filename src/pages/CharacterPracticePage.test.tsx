@@ -42,12 +42,15 @@ describe("character practice UI", () => {
   it("separates the pronunciation table from practice-set controls", async () => {
     renderRoute("/ja/characters");
 
-    expect(screen.getByRole("link", { name: "Kana & pronunciation" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Kana guide" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("heading", { name: "Kana table & pronunciation" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Build a practice set" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("link", { name: "Practice sets" }));
     expect(await screen.findByRole("heading", { name: "Build a practice set" })).toBeInTheDocument();
+    expect(screen.getByText("10 selected")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "10" })).toBeChecked();
+    expect(screen.getByRole("button", { name: "Next 10 kana" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Practice sets" })).toHaveAttribute("aria-current", "page");
     expect(screen.queryByRole("heading", { name: "Kana table & pronunciation" })).not.toBeInTheDocument();
   });

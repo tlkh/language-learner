@@ -1,56 +1,22 @@
-import { gradeQuestion, mergeVariantQuestions, selectSceneBalancedQuestions } from "../../quiz/engine";
+import { gradeQuestion, selectSceneBalancedQuestions } from "../../quiz/engine";
 import type {
   GenerateQuizOptions,
   GradeResult,
+  QuizChoiceOption,
   QuizQuestion,
   QuizTierDefinition,
-  QuizTierId,
-  SpeechVariantId,
   Topic,
   VocabularyEntry
 } from "../types";
-import { formFor, renderPattern } from "./helpers";
+import { formFor } from "./helpers";
 
-export const QUIZ_SIZE = 24;
-export const PASS_SCORE = 20;
+export const QUIZ_SIZE = 10;
+export const PASS_SCORE = 8;
 
 export const quizTiers: QuizTierDefinition[] = [
-  {
-    id: "romaji-recall",
-    step: 1,
-    title: "Read the word",
-    shortTitle: "Romaji",
-    description: "Type the romaji for Japanese vocabulary.",
-    sessionSize: QUIZ_SIZE,
-    passScore: PASS_SCORE
-  },
-  {
-    id: "script-recall",
-    step: 2,
-    title: "Write the word",
-    shortTitle: "Japanese",
-    description: "Type kana or kanji from the English meaning.",
-    sessionSize: QUIZ_SIZE,
-    passScore: PASS_SCORE
-  },
-  {
-    id: "sentence-production",
-    step: 3,
-    title: "Build the sentence",
-    shortTitle: "Sentences",
-    description: "Translate practical English sentences into Japanese.",
-    sessionSize: QUIZ_SIZE,
-    passScore: PASS_SCORE
-  },
-  {
-    id: "response-production",
-    step: 4,
-    title: "Reply naturally",
-    shortTitle: "Responses",
-    description: "Read Japanese and type an appropriate Japanese response.",
-    sessionSize: QUIZ_SIZE,
-    passScore: PASS_SCORE
-  }
+  { id: "recognition", step: 1, title: "Recognize the meaning", shortTitle: "Recognize", description: "Read Japanese with its kana and choose the English meaning.", sessionSize: QUIZ_SIZE, passScore: PASS_SCORE },
+  { id: "recall", step: 2, title: "Recall the Japanese", shortTitle: "Recall", description: "Type kana or kanji from the English meaning.", sessionSize: QUIZ_SIZE, passScore: PASS_SCORE },
+  { id: "in-context", step: 3, title: "Use it in context", shortTitle: "In context", description: "Choose the sentence or reply that fits a real interaction.", sessionSize: QUIZ_SIZE, passScore: PASS_SCORE }
 ];
 
 const punctuation = /[\s。、，,.!?！？「」『』（）()・:：;；'’\-]/gu;
@@ -63,8 +29,10 @@ export function gradeAnswer(question: QuizQuestion, input: string): GradeResult 
   return gradeQuestion(question, input, normalizeAnswer, question.answerLanguage);
 }
 
-const scriptAnswers = (entry: VocabularyEntry, variantId: SpeechVariantId) => {
-  const form = formFor(entry, variantId);
+const domainVocabulary = (topic: Topic) => topic.vocabulary.filter((entry) => entry.tags.includes("domain"));
+
+const scriptAnswers = (entry: VocabularyEntry) => {
+  const form = formFor(entry, "formal");
   return Array.from(new Set([
     form.representations.target,
     form.representations.reading,
@@ -72,166 +40,167 @@ const scriptAnswers = (entry: VocabularyEntry, variantId: SpeechVariantId) => {
   ].filter(Boolean)));
 };
 
-function vocabularyQuestion(
-  topic: Topic,
-  entry: VocabularyEntry,
-  tierId: QuizTierId,
-  variantId: SpeechVariantId
-): QuizQuestion {
-  const form = formFor(entry, variantId);
-  if (tierId === "romaji-recall") {
-    return {
-      id: `${tierId}:${variantId}:${entry.id}`,
-      languageCode: "ja",
-      topicId: topic.id,
-      sourceId: entry.masteryKey,
-      sceneId: entry.primarySceneId,
-      tierId,
-      variantId,
-      prompt: form.representations.target,
-      promptLanguage: "ja",
-      canonicalAnswer: form.representations.romanization,
-      acceptedAnswers: [form.representations.romanization, ...(form.aliases.romanization ?? [])],
-      answerLanguage: "en",
-      answerRepresentationId: "romanization",
-      answerLabel: "Romaji answer",
-      answerPlaceholder: "Type romaji",
-      helper: entry.meanings.join(" · ")
-    };
+function stableHash(value: string) {
+  let hash = 2166136261;
+  for (const character of value) {
+    hash ^= character.codePointAt(0) ?? 0;
+    hash = Math.imul(hash, 16777619);
   }
-  return {
-    id: `${tierId}:${variantId}:${entry.id}`,
-    languageCode: "ja",
-    topicId: topic.id,
-    sourceId: entry.masteryKey,
-    sceneId: entry.primarySceneId,
-    tierId,
-    variantId,
-    prompt: entry.meanings[0],
-    promptLanguage: "en",
-    canonicalAnswer: form.representations.target,
-    acceptedAnswers: scriptAnswers(entry, variantId),
-    answerLanguage: "ja",
-    answerRepresentationId: "target",
-    answerLabel: "Japanese answer",
-    answerPlaceholder: "日本語で入力",
-    helper: "Write this in Japanese script."
-  };
+  return hash >>> 0;
 }
 
-function patternQuestions(topic: Topic, tierId: QuizTierId, variantId: SpeechVariantId): QuizQuestion[] {
-  const vocabulary = new Map(topic.vocabulary.map((entry) => [entry.id, entry]));
-  if (tierId === "sentence-production") {
-    return topic.sentencePatterns.flatMap((pattern) =>
-      pattern.slotEntryIds.length ? pattern.slotEntryIds.map((entryId) => {
-        const entry = vocabulary.get(entryId)!;
-        const form = formFor(entry, variantId);
-        const targetTemplate = pattern.targetTextByVariant[variantId];
-        const canonical = renderPattern(targetTemplate, entry, variantId, "target");
-        const reading = targetTemplate.replaceAll("{term}", form.representations.reading);
-        return {
-          id: `${tierId}:${variantId}:${pattern.id}:${entryId}`,
-          languageCode: "ja",
-          topicId: topic.id,
-          sourceId: entry.masteryKey,
-          sceneId: pattern.sceneId,
-          tierId,
-          variantId,
-          prompt: renderPattern(pattern.sourceText, entry, variantId, "source", pattern.slotSourceText?.[entry.id]),
-          promptLanguage: "en",
-          canonicalAnswer: canonical,
-          acceptedAnswers: Array.from(new Set([canonical, reading])),
-          answerLanguage: "ja",
-          answerRepresentationId: "target",
-          answerLabel: "Japanese answer",
-          answerPlaceholder: "日本語で入力",
-          helper: variantId === "formal" ? "Use the polite form." : "Use the casual form."
-        };
-      }) : [{
-        id: `${tierId}:${variantId}:${pattern.id}`,
-        languageCode: "ja",
-        topicId: topic.id,
-        sourceId: pattern.id,
-        sceneId: pattern.sceneId,
-        tierId,
-        variantId,
-        prompt: pattern.sourceText,
-        promptLanguage: "en",
-        canonicalAnswer: pattern.targetTextByVariant[variantId],
-        acceptedAnswers: [pattern.targetTextByVariant[variantId]],
-        answerLanguage: "ja",
-        answerRepresentationId: "target",
-        answerLabel: "Japanese answer",
-        answerPlaceholder: "日本語で入力",
-        helper: variantId === "formal" ? "Use the polite form from the scene." : "Use the casual form from the scene."
-      }]
-    );
-  }
+function choiceOptions(
+  correctId: string,
+  pool: Array<{ id: string; text: string; reading?: string }>,
+  language: string
+): QuizChoiceOption[] {
+  const correct = pool.find((item) => item.id === correctId);
+  if (!correct) throw new Error(`Missing correct choice ${correctId}`);
+  const unique = pool.filter((item, index, items) =>
+    item.id === correctId || items.findIndex((candidate) => candidate.text === item.text) === index
+  );
+  const distractors = unique
+    .filter((candidate) => candidate.id !== correctId && candidate.text !== correct.text)
+    .sort((a, b) => stableHash(`${correctId}:${a.id}`) - stableHash(`${correctId}:${b.id}`))
+    .slice(0, 3);
+  const selected = [correct, ...distractors];
+  if (selected.length < 4) throw new Error(`Choice ${correctId} has fewer than four unique options`);
+  const rotation = stableHash(`${correctId}:order`) % selected.length;
+  return [...selected.slice(rotation), ...selected.slice(0, rotation)].map((item) => ({ ...item, language }));
+}
 
-  return topic.responsePatterns.flatMap((pattern) =>
-    pattern.slotEntryIds.length ? pattern.slotEntryIds.map((entryId) => {
-      const entry = vocabulary.get(entryId)!;
-      const form = formFor(entry, variantId);
-      const answerTemplate = pattern.answerTargetTextByVariant[variantId];
-      const canonical = renderPattern(answerTemplate, entry, variantId, "target");
-      const reading = answerTemplate.replaceAll("{term}", form.representations.reading);
+function vocabularyQuestions(topic: Topic, tierId: "recognition" | "recall"): QuizQuestion[] {
+  const entries = domainVocabulary(topic);
+  const meaningPool = entries.map((entry) => ({ id: entry.id, text: entry.meanings.join(" / ") }));
+  return entries.map((entry) => {
+    const form = formFor(entry, "formal");
+    if (tierId === "recognition") {
       return {
-        id: `${tierId}:${variantId}:${pattern.id}:${entryId}`,
+        kind: "choice",
+        id: `${tierId}:formal:${entry.id}`,
         languageCode: "ja",
         topicId: topic.id,
         sourceId: entry.masteryKey,
-        sceneId: pattern.sceneId,
+        learningPriority: entry.priority,
+        sceneId: entry.primarySceneId,
         tierId,
-        variantId,
-        prompt: renderPattern(pattern.promptTargetTextByVariant[variantId], entry, variantId, "target"),
+        variantId: "formal",
+        prompt: form.representations.target,
+        promptReading: form.representations.reading,
         promptLanguage: "ja",
-        canonicalAnswer: canonical,
-        acceptedAnswers: Array.from(new Set([canonical, reading])),
-        answerLanguage: "ja",
-        answerRepresentationId: "target",
-        answerLabel: "Japanese answer",
-        answerPlaceholder: "日本語で入力",
-        helper: variantId === "formal" ? "Reply politely in Japanese." : "Reply casually in Japanese."
-      };
-    }) : [{
-      id: `${tierId}:${variantId}:${pattern.id}`,
+        canonicalAnswer: entry.meanings[0],
+        acceptedAnswers: [entry.id],
+        answerLanguage: "en",
+        answerRepresentationId: "meaning",
+        answerLabel: "Choose the meaning",
+        answerPlaceholder: "",
+        helper: "Read the Japanese and its kana.",
+        explanation: `${form.representations.target}${form.representations.reading !== form.representations.target ? `（${form.representations.reading}）` : ""} means “${entry.meanings.join(" / ")}.”`,
+        options: choiceOptions(entry.id, meaningPool, "en"),
+        correctOptionId: entry.id
+      } satisfies QuizQuestion;
+    }
+    return {
+      kind: "text",
+      id: `${tierId}:formal:${entry.id}`,
       languageCode: "ja",
       topicId: topic.id,
-      sourceId: pattern.id,
-      sceneId: pattern.sceneId,
+      sourceId: entry.masteryKey,
+      learningPriority: entry.priority,
+      sceneId: entry.primarySceneId,
       tierId,
-      variantId,
-      prompt: pattern.promptTargetTextByVariant[variantId],
-      promptLanguage: "ja",
-      canonicalAnswer: pattern.answerTargetTextByVariant[variantId],
-      acceptedAnswers: [pattern.answerTargetTextByVariant[variantId]],
+      variantId: "formal",
+      prompt: entry.meanings[0],
+      promptLanguage: "en",
+      canonicalAnswer: form.representations.target,
+      acceptedAnswers: scriptAnswers(entry),
       answerLanguage: "ja",
       answerRepresentationId: "target",
       answerLabel: "Japanese answer",
       answerPlaceholder: "日本語で入力",
-      helper: variantId === "formal" ? "Reply politely using the scene dialogue." : "Reply casually using the scene dialogue."
-    }]
-  );
+      helper: "Kana or the usual kanji form is accepted.",
+      explanation: form.representations.reading !== form.representations.target ? `Reading: ${form.representations.reading}` : undefined
+    } satisfies QuizQuestion;
+  });
+}
+
+function contextQuestions(topic: Topic): QuizQuestion[] {
+  const lines = topic.scenes.flatMap((scene) => scene.dialogueIds.flatMap((dialogueId) => {
+    const scenario = topic.dialogues.find((candidate) => candidate.id === dialogueId);
+    return scenario?.turns.map((turn, index) => ({
+      id: `${scenario.id}:turn:${index + 1}`,
+      sceneId: scene.id,
+      source: turn.sourceText,
+      text: turn.targetTextByVariant.formal,
+      reading: turn.targetReadingByVariant?.formal
+    })) ?? [];
+  }));
+  const optionPool = lines.map(({ id, text, reading }) => ({ id, text, reading }));
+  const sentenceChoices = lines.map((line) => ({
+    kind: "choice",
+    id: `in-context:formal:sentence:${line.id}`,
+    languageCode: "ja",
+    topicId: topic.id,
+    sourceId: `sentence:${line.id}`,
+    sceneId: line.sceneId,
+    tierId: "in-context",
+    variantId: "formal",
+    prompt: line.source,
+    promptLanguage: "en",
+    canonicalAnswer: line.text,
+    acceptedAnswers: [line.id],
+    answerLanguage: "ja",
+    answerRepresentationId: "target",
+    answerLabel: "Choose the Japanese line",
+    answerPlaceholder: "",
+    helper: "Choose the polite line that matches the situation.",
+    explanation: line.reading ? `${line.text}（${line.reading}）` : line.text,
+    options: choiceOptions(line.id, optionPool, "ja"),
+    correctOptionId: line.id
+  } satisfies QuizQuestion));
+  const responseChoices = topic.scenes.flatMap((scene) => scene.dialogueIds.flatMap((dialogueId) => {
+    const scenario = topic.dialogues.find((candidate) => candidate.id === dialogueId);
+    if (!scenario) return [];
+    return scenario.turns.slice(0, -1).map((turn, index) => {
+      const answer = scenario.turns[index + 1];
+      const correctId = `${scenario.id}:turn:${index + 2}`;
+      return {
+        kind: "choice",
+        id: `in-context:formal:response:${scenario.id}:${index + 1}`,
+        languageCode: "ja",
+        topicId: topic.id,
+        sourceId: `response:${scenario.id}:${index + 1}`,
+        sceneId: scene.id,
+        tierId: "in-context",
+        variantId: "formal",
+        prompt: turn.targetTextByVariant.formal,
+        promptReading: turn.targetReadingByVariant?.formal,
+        promptLanguage: "ja",
+        canonicalAnswer: answer.targetTextByVariant.formal,
+        acceptedAnswers: [correctId],
+        answerLanguage: "ja",
+        answerRepresentationId: "target",
+        answerLabel: "Choose the natural reply",
+        answerPlaceholder: "",
+        helper: `In “${scenario.title},” choose what comes next.`,
+        explanation: `${answer.targetTextByVariant.formal}${answer.targetReadingByVariant?.formal ? `（${answer.targetReadingByVariant.formal}）` : ""} — ${answer.sourceText}`,
+        options: choiceOptions(correctId, optionPool, "ja"),
+        correctOptionId: correctId
+      } satisfies QuizQuestion;
+    });
+  }));
+  return [...sentenceChoices, ...responseChoices];
 }
 
 export function generateQuiz(topic: Topic, options: GenerateQuizOptions): QuizQuestion[] {
   const count = options.count ?? QUIZ_SIZE;
-  const candidates = options.tierId === "romaji-recall" || options.tierId === "script-recall"
-    ? topic.vocabulary.map((entry) => vocabularyQuestion(topic, entry, options.tierId, options.variantId))
-    : patternQuestions(topic, options.tierId, options.variantId);
+  const candidates = options.tierId === "recognition" || options.tierId === "recall"
+    ? vocabularyQuestions(topic, options.tierId)
+    : contextQuestions(topic);
   return selectSceneBalancedQuestions(candidates, {
     count,
     seed: options.seed,
     mastery: options.mastery,
     correctQuestionIds: options.correctQuestionIds
   });
-}
-
-export function mergeSpeechVariantQuestions(
-  previous: QuizQuestion[],
-  currentIndex: number,
-  regenerated: QuizQuestion[],
-  count = QUIZ_SIZE
-): QuizQuestion[] {
-  return mergeVariantQuestions(previous, currentIndex, regenerated, count, normalizeAnswer);
 }

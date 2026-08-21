@@ -49,8 +49,9 @@ describe("focused vocabulary study", () => {
     expect(screen.getByRole("button", { name: "Again" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Got it/ })).toBeInTheDocument();
     expect(screen.getByText("military aircraft")).toBeInTheDocument();
-    expect(screen.getByText("gunyouki")).toBeInTheDocument();
-    expect(screen.getByText(/The Japanese noun for “military aircraft,”/)).toBeInTheDocument();
+    expect(screen.getByText("ぐんようき")).toBeInTheDocument();
+    expect(screen.queryByText("gunyouki")).not.toBeInTheDocument();
+    expect(screen.getByText("Distinguish fighters, transports, support aircraft, helicopters, and service branches.")).toBeInTheDocument();
   });
 
   it("supports focus-mode keyboard controls without allowing an unflipped rating", async () => {

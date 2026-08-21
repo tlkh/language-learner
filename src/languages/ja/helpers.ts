@@ -8,6 +8,7 @@ import type {
   VocabularyEntry
 } from "../types";
 import { ESSENTIAL_PHRASE_SET_ID, priorityOverrides, topicCurriculum } from "./curriculum";
+import { dialogueReadings } from "./dialogue-readings";
 
 type RawVocabulary = readonly [
   meaning: string,
@@ -195,55 +196,27 @@ export const buildTopic = (seed: TopicSeed): Topic => {
   const core = essentialPhraseVocabulary
     .filter((entry) => !domainMeanings.has(entry.meanings[0].toLocaleLowerCase("en")) && !domainForms.has(entry.baseForm.representations.target));
   const vocabulary = [...domain, ...core];
-  const entriesByMeaning = new Map(domain.map((entry) => [entry.meanings[0], entry]));
-  const slotSpecs = seed.slotMeanings.map((slot) =>
-    typeof slot === "string" ? { meaning: slot, english: slot } : { meaning: slot[0], english: slot[1] }
-  );
-  const slotEntries = slotSpecs.map(({ meaning }) => entriesByMeaning.get(meaning)).filter((entry): entry is VocabularyEntry => Boolean(entry));
-  if (slotEntries.length !== seed.slotMeanings.length) {
-    const missing = slotSpecs.filter(({ meaning }) => !entriesByMeaning.has(meaning)).map(({ meaning }) => meaning);
-    throw new Error(`${seed.id} has missing authored quiz slots: ${missing.join(", ")}`);
-  }
-  if (new Set(slotEntries.map((entry) => entry.id)).size < 24) throw new Error(`${seed.id} needs at least 24 unique compatible slots`);
-
-  const englishByEntry = Object.fromEntries(slotEntries.map((entry, index) => [entry.id, slotSpecs[index].english]));
   const sentencePatterns: SentencePattern[] = curriculum.scenes.flatMap((scene, sceneIndex) => {
-    const sceneSlots = slotEntries.filter((entry) => entry.primarySceneId === scene.id);
-    const generated = sceneSlots.length ? [{
-      id: `${seed.id}-${scene.id}-sentence-slots`,
-      sceneId: scene.id,
-      sourceText: seed.sentence.english,
-      targetTextByVariant: { formal: seed.sentence.formal, informal: seed.sentence.informal },
-      slotEntryIds: sceneSlots.map((entry) => entry.id),
-      slotSourceText: Object.fromEntries(sceneSlots.map((entry) => [entry.id, englishByEntry[entry.id]]))
-    }] : [];
-    const dialoguePatterns = seed.dialogues[sceneIndex].turns.map((turn, turnIndex) => ({
+    return seed.dialogues[sceneIndex].turns.map((turn, turnIndex) => ({
       id: `${seed.id}-${scene.id}-dialogue-sentence-${turnIndex + 1}`,
       sceneId: scene.id,
       sourceText: turn.sourceText,
       targetTextByVariant: turn.targetTextByVariant,
+      targetReadingByVariant: turn.targetReadingByVariant,
       slotEntryIds: []
     }));
-    return [...generated, ...dialoguePatterns];
   });
   const responsePatterns: ResponsePattern[] = curriculum.scenes.flatMap((scene, sceneIndex) => {
-    const sceneSlots = slotEntries.filter((entry) => entry.primarySceneId === scene.id);
-    const generated = sceneSlots.length ? [{
-      id: `${seed.id}-${scene.id}-response-slots`,
-      sceneId: scene.id,
-      promptTargetTextByVariant: { formal: seed.response.promptFormal, informal: seed.response.promptInformal },
-      answerTargetTextByVariant: { formal: seed.response.answerFormal, informal: seed.response.answerInformal },
-      slotEntryIds: sceneSlots.map((entry) => entry.id)
-    }] : [];
     const turns = seed.dialogues[sceneIndex].turns;
-    const dialoguePatterns = turns.slice(0, -1).map((turn, turnIndex) => ({
+    return turns.slice(0, -1).map((turn, turnIndex) => ({
       id: `${seed.id}-${scene.id}-dialogue-response-${turnIndex + 1}`,
       sceneId: scene.id,
       promptTargetTextByVariant: turn.targetTextByVariant,
       answerTargetTextByVariant: turns[turnIndex + 1].targetTextByVariant,
+      promptReadingByVariant: turn.targetReadingByVariant,
+      answerReadingByVariant: turns[turnIndex + 1].targetReadingByVariant,
       slotEntryIds: []
     }));
-    return [...generated, ...dialoguePatterns];
   });
 
   const scenes = curriculum.scenes.map((scene, index) => ({
@@ -268,7 +241,7 @@ export const buildTopic = (seed: TopicSeed): Topic => {
     dialogues: seed.dialogues,
     sentencePatterns,
     responsePatterns,
-    quizTierIds: ["romaji-recall", "script-recall", "sentence-production", "response-production"]
+    quizTierIds: ["recognition", "recall", "in-context"]
   };
 };
 
@@ -295,6 +268,7 @@ export const dialogue = (
   turns: turns.map(([speaker, english, formal, informal]) => ({
     speaker,
     sourceText: english,
-    targetTextByVariant: { formal, informal }
+    targetTextByVariant: { formal, informal },
+    targetReadingByVariant: { formal: dialogueReadings[formal] }
   }))
 });

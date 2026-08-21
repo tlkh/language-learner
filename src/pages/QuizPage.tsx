@@ -27,6 +27,7 @@ export function QuizPage({ source = "topic" }: { source?: "topic" | "phrases" })
   const [keyboardInset, setKeyboardInset] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const reduceMotion = useReducedMotion();
+  const question = session?.questions[session.currentIndex];
 
   useEffect(() => {
     if (!topic || !tier) return;
@@ -83,8 +84,8 @@ export function QuizPage({ source = "topic" }: { source?: "topic" | "phrases" })
   }, [pack, searchParams, tier, topic]);
 
   useEffect(() => {
-    if (!result) inputRef.current?.focus({ preventScroll: true });
-  }, [result, session?.currentIndex]);
+    if (!result && question?.kind !== "choice") inputRef.current?.focus({ preventScroll: true });
+  }, [question?.kind, result, session?.currentIndex]);
 
   useEffect(() => {
     const viewport = window.visualViewport;
@@ -102,7 +103,6 @@ export function QuizPage({ source = "topic" }: { source?: "topic" | "phrases" })
     };
   }, []);
 
-  const question = session?.questions[session.currentIndex];
   const sessionSize = session?.questions.length ?? tier?.sessionSize ?? 0;
   const progress = sessionSize && session ? session.currentIndex / sessionSize : 0;
 
@@ -193,17 +193,45 @@ export function QuizPage({ source = "topic" }: { source?: "topic" | "phrases" })
       <main className="quiz-card">
         <motion.div className="quiz-prompt" key={question.id} initial={reduceMotion ? { opacity: 0 } : { opacity: 0, transform: "translateY(3px)" }} animate={{ opacity: 1, transform: "translateY(0px)" }} transition={{ duration: reduceMotion ? 0.1 : 0.16, ease: [0.23, 1, 0.32, 1] }}>
           <h1 lang={question.promptLanguage}>{question.prompt}</h1>
+          {question.promptReading && question.promptReading !== question.prompt ? <span className="quiz-prompt__reading" lang={question.promptLanguage}>{question.promptReading}</span> : null}
           <p>{question.helper}</p>
         </motion.div>
 
         <form className="answer-form" onSubmit={submit}>
-          <label htmlFor="quiz-answer">{question.answerLabel}</label>
-          <div className={`answer-input${inputError ? " is-error" : ""}${result ? ` is-${result.status}` : ""}`}>
-            <input id="quiz-answer" ref={inputRef} value={input} onChange={(event) => { setInput(event.target.value); if (inputError) setInputError(false); }} lang={question.answerLanguage} autoCapitalize="none" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" readOnly={Boolean(result)} aria-invalid={inputError} aria-describedby="answer-helper" placeholder={question.answerPlaceholder} />
-            {result?.status === "correct" ? <Check aria-hidden="true" /> : null}
-            {result && result.status !== "correct" ? <CircleX aria-hidden="true" /> : null}
-          </div>
-          <div id="answer-helper" className="answer-helper" aria-live="polite">{inputError ? "Type an answer, or choose “I don’t know.”" : " "}</div>
+          {question.kind === "choice" ? (
+            <fieldset className="quiz-choices" aria-describedby="answer-helper">
+              <legend>{question.answerLabel}</legend>
+              {question.options?.map((option) => {
+                const selected = input === option.id;
+                const correct = result && option.id === question.correctOptionId;
+                const incorrect = result && selected && !correct;
+                return (
+                  <button
+                    className={`${selected ? "is-selected" : ""}${correct ? " is-correct" : ""}${incorrect ? " is-incorrect" : ""}`}
+                    type="button"
+                    key={option.id}
+                    aria-pressed={selected}
+                    disabled={Boolean(result) || submitting}
+                    onClick={() => { setInput(option.id); setInputError(false); }}
+                  >
+                    <span lang={option.language}>{option.text}</span>
+                    {option.reading && option.reading !== option.text ? <small lang={option.language}>{option.reading}</small> : null}
+                    {correct ? <Check aria-hidden="true" /> : incorrect ? <CircleX aria-hidden="true" /> : null}
+                  </button>
+                );
+              })}
+            </fieldset>
+          ) : (
+            <>
+              <label htmlFor="quiz-answer">{question.answerLabel}</label>
+              <div className={`answer-input${inputError ? " is-error" : ""}${result ? ` is-${result.status}` : ""}`}>
+                <input id="quiz-answer" ref={inputRef} value={input} onChange={(event) => { setInput(event.target.value); if (inputError) setInputError(false); }} lang={question.answerLanguage} autoCapitalize="none" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" readOnly={Boolean(result)} aria-invalid={inputError} aria-describedby="answer-helper" placeholder={question.answerPlaceholder} />
+                {result?.status === "correct" ? <Check aria-hidden="true" /> : null}
+                {result && result.status !== "correct" ? <CircleX aria-hidden="true" /> : null}
+              </div>
+            </>
+          )}
+          <div id="answer-helper" className="answer-helper" aria-live="polite">{inputError ? `${question.kind === "choice" ? "Choose" : "Type"} an answer, or choose “I don’t know.”` : " "}</div>
 
           <AnimatePresence initial={false}>
             {result ? (
@@ -212,7 +240,8 @@ export function QuizPage({ source = "topic" }: { source?: "topic" | "phrases" })
                   {result.status === "correct" ? <Check aria-hidden="true" /> : result.status === "near-miss" ? <Minus aria-hidden="true" /> : <CircleX aria-hidden="true" />}
                   <h2>{result.status === "correct" ? "Correct" : result.status === "near-miss" ? "Almost" : "Not this time"}</h2>
                 </div>
-                {result.status !== "correct" ? <><p>The accepted answer is <strong lang={question.answerLanguage}>{result.canonicalAnswer}</strong>.</p>{input.trim() && diff.length ? <div className="answer-diff" aria-label="Character comparison">{diff.map((part, index) => <span className={`is-${part.kind}`} key={`${part.kind}-${index}`}>{part.value}</span>)}</div> : null}</> : <p>Your answer matches an accepted form.</p>}
+                {result.status !== "correct" ? <><p>The accepted answer is <strong lang={question.answerLanguage}>{result.canonicalAnswer}</strong>.</p>{input.trim() && diff.length ? <div className="answer-diff" aria-label="Character comparison">{diff.map((part, index) => <span className={`is-${part.kind}`} key={`${part.kind}-${index}`}>{part.value}</span>)}</div> : null}</> : <p>{question.kind === "choice" ? "That is the right choice." : "Your answer matches an accepted form."}</p>}
+                {question.explanation ? <p className="answer-feedback__explanation">{question.explanation}</p> : null}
               </motion.section>
             ) : null}
           </AnimatePresence>

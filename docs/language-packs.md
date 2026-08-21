@@ -48,7 +48,7 @@ The catalog must remain lightweight. Do not statically import pack content there
 - identity: `code`, English and native names, BCP-47 `locale` and `sourceLocale`, and a short selector mark;
 - typography: a target-script font stack assigned to `--font-target`;
 - representations: stable IDs, labels, language tags, and optional input hints;
-- speech variants: at least one stable string ID and a default;
+- speech variants: at least one stable string ID and a default; `presentation.speechVariantMode` may make alternatives recognition-only while keeping the default as the assessment target;
 - presentation: shell copy, keyboard guidance, tracks, collections, and vocabulary groups;
 - curriculum: topics, scenes, dialogue, patterns, vocabulary, and shared sets;
 - quiz adapter: tier metadata, session size, pass score, generation, grading, and normalization;
@@ -74,7 +74,7 @@ const entry = {
 };
 ```
 
-Variant-specific forms belong in `variantForms[variantId]`. Dialogue and pattern target text belongs in `targetTextByVariant`; source-language copy uses `sourceText`. A pack with one speech variant still supplies one variant record. The switch is hidden automatically.
+Variant-specific forms belong in `variantForms[variantId]`. Dialogue and pattern target text belongs in `targetTextByVariant`; optional reading support belongs in the matching `*ReadingByVariant` field; source-language copy uses `sourceText`. A pack with one speech variant still supplies one variant record. The switch is hidden automatically. Set `speechVariantMode: "primary-with-reference"` when the default variant is taught and assessed while alternatives are displayed only as recognition notes.
 
 All prompt and answer language tags must be valid BCP-47 tags. Use the most specific tag needed for input and segmentation, but do not invent private tags merely to describe a representation.
 
@@ -216,7 +216,8 @@ Quiz tiers are entirely pack-owned. The shared engine only provides deterministi
 
 - Generate exactly `count ?? tier.sessionSize` unique questions.
 - Put BCP-47 tags and input metadata on every prompt and answer.
-- Include the canonical answer in `acceptedAnswers` and add only deliberately accepted aliases.
+- For text questions, include the canonical answer in `acceptedAnswers` and add only deliberately accepted aliases.
+- For choice questions, set `kind: "choice"`, supply four unique `options`, set `correctOptionId`, and include that option ID in `acceptedAnswers`. Keep `canonicalAnswer` equal to the correct option’s display text.
 - Normalize per representation. Do not remove meaningful accents, tone marks, spacing, or punctuation unless the language’s orthography permits it.
 - Use `Intl.Segmenter` through the shared engine for comparison. Never assume one JavaScript code unit, Unicode scalar value, or grapheme equals one learning item.
 - Keep compatibility or alternate spellings explicit. The shared engine does not reject Latin input globally.

@@ -32,9 +32,12 @@ export function SettingsPage() {
           <div><strong>Language</strong><p>{pack.name} is the active installed language pack.</p></div>
           <span className="setting-value" lang={pack.locale}>{pack.nativeName}</span>
         </div>
-        {pack.speechVariants.length > 1 ? <div className="setting-row setting-row--stack">
+        {pack.speechVariants.length > 1 && pack.presentation.speechVariantMode !== "primary-with-reference" ? <div className="setting-row setting-row--stack">
           <div><strong>Speech style</strong><p>This applies to lessons and the next unanswered quiz question. Polite is safest with staff and strangers.</p></div>
           <RegisterSwitch />
+        </div> : pack.presentation.speechVariantMode === "primary-with-reference" ? <div className="setting-row">
+          <div><strong>Speech style</strong><p>Lessons teach polite Japanese. Casual equivalents appear as recognition notes and do not create separate progress.</p></div>
+          <span className="setting-value" lang={pack.locale}>丁寧</span>
         </div> : null}
         <Link className="setting-action" to="/"><span><span><strong>Choose another language</strong><small>Return to the installed language packs.</small></span></span></Link>
       </section>

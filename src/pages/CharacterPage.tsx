@@ -24,8 +24,10 @@ export function CharacterPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") === "practice" ? "practice" : "reference";
-  const [selected, setSelected] = useState(() => new Set(course.items.map((item) => item.id)));
-  const [sessionSize, setSessionSize] = useState<CharacterSessionSize>(course.sessionSizes.includes(20) ? 20 : course.sessionSizes[0]);
+  const beginnerPreset = pack.presentation.speechVariantMode === "primary-with-reference";
+  const orderedItemIds = course.collections.flatMap((collection) => collection.sections.flatMap((section) => section.groups.flatMap((group) => group.itemIds)));
+  const [selected, setSelected] = useState(() => new Set(beginnerPreset ? orderedItemIds.slice(0, 10) : course.items.map((item) => item.id)));
+  const [sessionSize, setSessionSize] = useState<CharacterSessionSize>(beginnerPreset && course.sessionSizes.includes(10) ? 10 : course.sessionSizes.includes(20) ? 20 : course.sessionSizes[0]);
   const [starting, setStarting] = useState(false);
   const data = useLiveQuery(async () => {
     const [mastery, resume] = await Promise.all([
@@ -36,6 +38,11 @@ export function CharacterPage() {
   }, [course.id, mode.id, pack.code]);
   const mastered = Array.from(data?.mastery.values() ?? []).filter((item) => item.mastered).length;
   const selectedIds = useMemo(() => Array.from(selected), [selected]);
+  const selectNextBeginnerSet = () => {
+    const next = orderedItemIds.filter((id) => !data?.mastery.get(id)?.mastered).slice(0, 10);
+    setSelected(new Set(next.length ? next : orderedItemIds.slice(0, 10)));
+    setSessionSize(10);
+  };
 
   const setItems = (itemIds: string[], checked: boolean) => {
     setSelected((current) => {
@@ -73,7 +80,7 @@ export function CharacterPage() {
 
       <nav className="topic-tabs character-tabs" aria-label={`${course.navLabel} sections`}>
         <Link className={activeTab === "reference" ? "is-active" : undefined} aria-current={activeTab === "reference" ? "page" : undefined} to={`${base}/characters?tab=reference`}>
-          {course.navLabel} & pronunciation
+          {course.navLabel} guide
         </Link>
         <Link className={activeTab === "practice" ? "is-active" : undefined} aria-current={activeTab === "practice" ? "page" : undefined} to={`${base}/characters?tab=practice`}>
           Practice sets
@@ -100,8 +107,8 @@ export function CharacterPage() {
           </section>
 
           <section className="character-builder" aria-labelledby="character-builder-title">
-            <div className="section-heading"><div><h2 id="character-builder-title">Build a practice set</h2><p>Select collections, sections, or individual rows. Weak characters are selected first.</p></div><strong>{selected.size} selected</strong></div>
-            <div className="character-builder__actions"><button className="text-button" type="button" onClick={() => setSelected(new Set(course.items.map((item) => item.id)))}>Select all</button><button className="text-button" type="button" onClick={() => setSelected(new Set())}>Clear</button></div>
+            <div className="section-heading"><div><h2 id="character-builder-title">Build a practice set</h2><p>{beginnerPreset ? "Start with 10 kana in course order. As you master them, load the next unmastered set or customize the rows." : "Select collections, sections, or individual rows. Weak characters are selected first."}</p></div><strong>{selected.size} selected</strong></div>
+            <div className="character-builder__actions">{beginnerPreset ? <button className="text-button" type="button" onClick={selectNextBeginnerSet}>Next 10 kana</button> : null}<button className="text-button" type="button" onClick={() => setSelected(new Set(course.items.map((item) => item.id)))}>Select all</button><button className="text-button" type="button" onClick={() => setSelected(new Set())}>Clear</button></div>
             <div className="character-selection">
               {course.collections.map((collection) => {
                 const collectionIds = itemIdsForGroups(collection.sections.flatMap((section) => section.groups));

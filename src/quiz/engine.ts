@@ -81,6 +81,16 @@ export function gradeQuestion(
   normalize: (value: string) => string,
   locale: string
 ): GradeResult {
+  if (question.kind === "choice") {
+    const option = question.options?.find((candidate) => candidate.id === question.correctOptionId);
+    const correct = input === question.correctOptionId;
+    return {
+      status: correct ? "correct" : "incorrect",
+      canonicalAnswer: option?.text ?? question.canonicalAnswer,
+      normalizedInput: input,
+      diff: []
+    };
+  }
   const normalizedInput = normalize(input);
   const accepted = question.acceptedAnswers.map(normalize);
   const canonical = normalize(question.canonicalAnswer);
@@ -126,10 +136,11 @@ export function selectSceneBalancedQuestions(
     .map((question) => ({
       question,
       priority: Object.prototype.hasOwnProperty.call(options.mastery ?? {}, question.sourceId) ? 1 : 0,
+      learningPriority: question.learningPriority === "must-know" ? 0 : question.learningPriority === "useful" ? 1 : 2,
       mastery: options.mastery?.[question.sourceId] ?? 0,
       tie: random()
     }))
-    .sort((a, b) => a.priority - b.priority || a.mastery - b.mastery || a.tie - b.tie);
+    .sort((a, b) => a.priority - b.priority || a.mastery - b.mastery || a.learningPriority - b.learningPriority || a.tie - b.tie);
   const selectBalanced = (pool: typeof ranked, count: number) => {
     const sceneIds = Array.from(new Set(pool.map(({ question }) => question.sceneId)));
     if (sceneIds.length < 2) return pool.slice(0, count);

@@ -43,7 +43,7 @@ const question: QuizQuestion = {
   topicId: "greetings-small-talk",
   sourceId: "resume-source",
   sceneId: "greeting-basics",
-  tierId: "romaji-recall",
+  tierId: "recall",
   variantId: "formal",
   prompt: "Hello",
   promptLanguage: "en",
@@ -77,11 +77,11 @@ describe("Learn page", () => {
     const topic = japanesePack.topics.find((item) => item.id === "aircraft-jsdf");
     const entries = topic?.vocabulary.filter((entry) => entry.tags.includes("domain")).slice(0, 2) ?? [];
     await db.mastery.bulkPut(entries.map((entry, index) => ({
-      id: masteryId("ja", topic?.id ?? "", entry.id, "romaji-recall", "formal"),
+      id: masteryId("ja", topic?.id ?? "", entry.id, "recall", "formal"),
       languageCode: "ja",
       topicId: topic?.id ?? "",
       sourceId: entry.id,
-      tierId: "romaji-recall",
+      tierId: "recall",
       variantId: "formal",
       confidence: 1,
       correct: 0,
@@ -101,11 +101,11 @@ describe("Learn page", () => {
     if (!weakEntry) throw new Error("Expected aircraft vocabulary");
     await Promise.all([
       db.mastery.put({
-        id: masteryId("ja", "aircraft-jsdf", weakEntry.id, "romaji-recall", "formal"),
+        id: masteryId("ja", "aircraft-jsdf", weakEntry.id, "recall", "formal"),
         languageCode: "ja",
         topicId: "aircraft-jsdf",
         sourceId: weakEntry.id,
-        tierId: "romaji-recall",
+        tierId: "recall",
         variantId: "formal",
         confidence: 1,
         correct: 0,
@@ -116,7 +116,7 @@ describe("Learn page", () => {
         id: "resume-session",
         languageCode: "ja",
         topicId: "greetings-small-talk",
-        tierId: "romaji-recall",
+        tierId: "recall",
         variantId: "formal",
         seed: 1,
         questions: [question],
@@ -132,45 +132,28 @@ describe("Learn page", () => {
 
     expect(await screen.findByRole("link", { name: "Resume" })).toHaveAttribute(
       "href",
-      "/ja/topic/greetings-small-talk/quiz/romaji-recall?resume=resume-session"
+      "/ja/topic/greetings-small-talk/quiz/recall?resume=resume-session"
     );
     expect(screen.queryByRole("link", { name: "Review now" })).not.toBeInTheDocument();
   });
 
-  it("dismisses the character-course card and remembers the choice", async () => {
+  it("keeps the home path focused by leaving kana study in its dedicated tab", () => {
     localStorage.setItem("ll-welcome-by-language", JSON.stringify({ ja: true }));
     renderLearnPage();
 
     expect(screen.getByRole("heading", { name: "Safety kit" })).toBeInTheDocument();
     expect(screen.queryByText("Food restrictions, weather warnings, and urgent help stay open without prerequisites."))
       .toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Learn Kana" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Dismiss Learn Kana card" }));
-
     expect(screen.queryByRole("heading", { name: "Learn Kana" })).not.toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem("ll-character-callout-by-language") ?? "{}"))
-      .toEqual({ ja: true });
-
-    await waitFor(async () => {
-      await expect(db.preferences.get("language:ja:characterCalloutDismissed")).resolves.toMatchObject({
-        value: "true"
-      });
-    });
-
-    cleanup();
-    renderLearnPage();
-    expect(screen.queryByRole("heading", { name: "Learn Kana" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Dismiss Learn Kana card" })).not.toBeInTheDocument();
   });
 
-  it("dismisses the safety kit and keeps it dismissed for this language", async () => {
+  it("keeps the compact Japanese safety kit permanently available", async () => {
     localStorage.setItem("ll-welcome-by-language", JSON.stringify({ ja: true }));
     renderLearnPage();
 
-    fireEvent.click(screen.getByRole("button", { name: "Dismiss Safety kit" }));
-    expect(screen.queryByRole("heading", { name: "Safety kit" })).not.toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem("ll-safety-kit-by-language") ?? "{}")).toEqual({ ja: true });
-    await waitFor(async () => {
-      await expect(db.preferences.get("language:ja:safetyKitDismissed")).resolves.toMatchObject({ value: "true" });
-    });
+    expect(screen.getByRole("heading", { name: "Safety kit" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Dismiss Safety kit" })).not.toBeInTheDocument();
+    await expect(db.preferences.get("language:ja:safetyKitDismissed")).resolves.toBeUndefined();
   });
 });

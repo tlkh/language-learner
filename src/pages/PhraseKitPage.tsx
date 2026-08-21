@@ -76,7 +76,7 @@ export function PhraseKitPage() {
                 return (
                   <li key={entry.id}>
                     <div className="vocabulary-list__japanese"><strong lang={pack.locale}>{target}</strong>{reading && reading !== target ? <span lang={pack.locale}>{reading}</span> : null}</div>
-                    <div className="vocabulary-list__meaning"><span>{entry.meanings.join(" · ")}</span>{form.representations.romanization ? <small>{form.representations.romanization}</small> : null}</div>
+                    <div className="vocabulary-list__meaning"><span>{entry.meanings.join(" · ")}</span>{form.representations.romanization && pack.presentation.speechVariantMode !== "primary-with-reference" ? <small>{form.representations.romanization}</small> : null}</div>
                   </li>
                 );
               })}

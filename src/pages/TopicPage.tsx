@@ -23,7 +23,8 @@ export function TopicPage() {
   const topic = topicId ? indexes.topics.get(topicId) : undefined;
   const selectedScene = sceneId ? topic?.scenes.find((scene) => scene.id === sceneId) : undefined;
   const [query, setQuery] = useState("");
-  const [priority, setPriority] = useState<PriorityFilter>("all");
+  const defaultPriority: PriorityFilter = pack.presentation.speechVariantMode === "primary-with-reference" ? "must-know" : "all";
+  const [priority, setPriority] = useState<PriorityFilter>(defaultPriority);
   const [showAll, setShowAll] = useState(false);
   const progressData = useLiveQuery(async () => {
     if (!topic) return { tiers: [], attempts: [], study: [] };
@@ -37,9 +38,9 @@ export function TopicPage() {
 
   useEffect(() => {
     setQuery("");
-    setPriority("all");
+    setPriority(defaultPriority);
     setShowAll(false);
-  }, [sceneId]);
+  }, [defaultPriority, sceneId]);
 
   const progressByTier = new Map(progressData.tiers.map((item) => [item.tierId, item]));
   const domainVocabulary = useMemo(() => topic?.vocabulary.filter((entry) => entry.tags.includes("domain")) ?? [], [topic]);
@@ -83,6 +84,9 @@ export function TopicPage() {
   const allStudyHref = `${base}/topic/${topic.id}/study?${studyParameters}`;
   const relatedTopics = topic.relatedTopicIds.map((id) => indexes.topics.get(id)).filter(Boolean);
   const activeVariant = pack.speechVariants.find((variant) => variant.id === variantId);
+  const referenceVariant = pack.presentation.speechVariantMode === "primary-with-reference"
+    ? pack.speechVariants.find((variant) => variant.id !== variantId)
+    : undefined;
   const topicTiers = topic.quizTierIds.map((id) => indexes.quizTiers.get(id)).filter((tier) => tier !== undefined);
   const checkpointPools = new Map(topicTiers.map((tier) => [tier.id, pack.quiz.generate(topic, {
     languageCode: pack.code,
@@ -124,7 +128,8 @@ export function TopicPage() {
         <Link className={!selectedScene ? "is-active" : undefined} to={`${base}/topic/${topic.id}?tab=${activeTab}`}>Overview</Link>
         {topic.scenes.map((scene, index) => (
           <Link className={selectedScene?.id === scene.id ? "is-active" : undefined} to={`${base}/topic/${topic.id}/scene/${scene.id}?tab=${activeTab}`} key={scene.id}>
-            <span>{index + 1}</span>{scene.title}
+            <span className="scene-switcher__number">{index + 1}</span>
+            <span className="scene-switcher__title">{scene.title}</span>
           </Link>
         ))}
       </nav>
@@ -136,13 +141,39 @@ export function TopicPage() {
 
       {activeTab === "learn" ? <>
       <nav className="topic-jumpbar" aria-label="On this topic">
+        <button type="button" onClick={() => jumpTo("scenes-title")}>Scenes</button>
         <button type="button" onClick={() => jumpTo("vocabulary-title")}>Words</button>
         <button type="button" onClick={() => jumpTo("dialogues-title")}>Dialogue</button>
-        <button type="button" onClick={() => jumpTo("scenes-title")}>Scenes</button>
       </nav>
       <p className="topic-guidance" role="note">
         {activeVariant?.description ?? `Using the ${activeVariant?.label ?? variantId} speech variant.`}
       </p>
+
+      {!selectedScene ? (
+        <section className="scene-section" aria-labelledby="scenes-title">
+          <div className="section-heading"><div><h2 id="scenes-title">Study the trip in scenes</h2><p>Start with one practical situation, then return for the rest of the topic.</p></div></div>
+          <div className="scene-grid">
+            {topic.scenes.map((scene, index) => {
+              const mustKnow = domainVocabulary.filter((entry) => entry.primarySceneId === scene.id && entry.priority === "must-know").length;
+              return (
+                <Link to={`${base}/topic/${topic.id}/scene/${scene.id}`} key={scene.id}>
+                  <span className="scene-number">Scene {index + 1}</span>
+                  <h3>{scene.title}</h3>
+                  <p>{scene.description}</p>
+                  <small>{mustKnow} must know · {scene.vocabularyIds.length} assessed words</small>
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ) : (
+        <section className="scene-focus" aria-labelledby="scenes-title">
+          <h2 id="scenes-title">What this scene prepares you to do</h2>
+          <p>{selectedScene.description}</p>
+          <div><span>{selectedScene.vocabularyIds.filter((id) => indexes.vocabulary.get(id)?.priority === "must-know").length} must-know words</span><span>1 guided dialogue</span></div>
+        </section>
+      )}
 
       <section className="vocabulary-section" aria-labelledby="vocabulary-title">
         <div className="section-heading section-heading--vocabulary">
@@ -173,7 +204,7 @@ export function TopicPage() {
             return (
               <li key={entry.id}>
                 <div className="vocabulary-list__japanese"><strong lang={pack.locale}>{target}</strong>{reading && reading !== target ? <span lang={pack.locale}>{reading}</span> : null}</div>
-                <div className="vocabulary-list__meaning"><span>{entry.meanings.join(" · ")}</span>{form.representations.romanization ? <small>{form.representations.romanization}</small> : null}</div>
+                <div className="vocabulary-list__meaning"><span>{entry.meanings.join(" · ")}</span>{form.representations.romanization && pack.presentation.speechVariantMode !== "primary-with-reference" ? <small>{form.representations.romanization}</small> : null}</div>
                 <span className={`priority-label priority-label--${entry.priority}`}>{priorityLabels[entry.priority]}</span>
                 {alternativeTarget ? <span className="register-note" title={`${alternativeVariant?.label}: ${alternativeTarget}`} lang={pack.locale}>{alternativeTarget}</span> : null}
               </li>
@@ -195,39 +226,16 @@ export function TopicPage() {
               <ol>{scenario.turns.map((turn, index) => (
                 <li className={`dialogue__turn dialogue__turn--${turn.speaker}`} key={`${scenario.id}-${index}`}>
                   <span className="dialogue__speaker">{turn.speaker === "traveler" ? "You" : "Local"}</span>
-                  <p lang={pack.locale}>{turn.targetTextByVariant[variantId]}</p><small>{turn.sourceText}</small>
+                  <p lang={pack.locale}>{turn.targetTextByVariant[variantId]}</p>
+                  {turn.targetReadingByVariant?.[variantId] && turn.targetReadingByVariant[variantId] !== turn.targetTextByVariant[variantId] ? <span className="dialogue__reading" lang={pack.locale}>{turn.targetReadingByVariant[variantId]}</span> : null}
+                  <small>{turn.sourceText}</small>
+                  {referenceVariant && turn.targetTextByVariant[referenceVariant.id] !== turn.targetTextByVariant[variantId] ? <span className="dialogue__reference"><b>Casual</b><span lang={pack.locale}>{turn.targetTextByVariant[referenceVariant.id]}</span></span> : null}
                 </li>
               ))}</ol>
             </article>
           ))}
         </div>
       </section>
-
-      {!selectedScene ? (
-        <section className="scene-section" aria-labelledby="scenes-title">
-          <div className="section-heading"><div><h2 id="scenes-title">Study the trip in scenes</h2><p>Small, practical groups organize study; the topic checkpoint covers all three.</p></div></div>
-          <div className="scene-grid">
-            {topic.scenes.map((scene, index) => {
-              const mustKnow = domainVocabulary.filter((entry) => entry.primarySceneId === scene.id && entry.priority === "must-know").length;
-              return (
-                <Link to={`${base}/topic/${topic.id}/scene/${scene.id}`} key={scene.id}>
-                  <span className="scene-number">Scene {index + 1}</span>
-                  <h3>{scene.title}</h3>
-                  <p>{scene.description}</p>
-                  <small>{scene.vocabularyIds.length} words · {mustKnow} must know</small>
-                  <ArrowRight aria-hidden="true" />
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      ) : (
-        <section className="scene-focus" aria-labelledby="scenes-title">
-          <h2 id="scenes-title">What this scene prepares you to do</h2>
-          <p>{selectedScene.description}</p>
-          <div><span>{selectedScene.sentencePatternIds.length} sentence functions</span><span>{selectedScene.responsePatternIds.length} response functions</span></div>
-        </section>
-      )}
 
       {companionSet ? <section className="topic-companions" aria-labelledby="companions-title">
         <div><h2 id="companions-title">{companionSet.title}</h2><p>{companionSet.description}</p></div>

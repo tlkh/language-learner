@@ -48,6 +48,7 @@ export interface DialogueTurn {
   speaker: "traveler" | "local";
   sourceText: string;
   targetTextByVariant: Record<SpeechVariantId, string>;
+  targetReadingByVariant?: Partial<Record<SpeechVariantId, string>>;
 }
 
 export interface DialogueScenario {
@@ -62,6 +63,7 @@ export interface SentencePattern {
   sceneId: string;
   sourceText: string;
   targetTextByVariant: Record<SpeechVariantId, string>;
+  targetReadingByVariant?: Partial<Record<SpeechVariantId, string>>;
   slotEntryIds: string[];
   slotSourceText?: Record<string, string>;
 }
@@ -71,6 +73,8 @@ export interface ResponsePattern {
   sceneId: string;
   promptTargetTextByVariant: Record<SpeechVariantId, string>;
   answerTargetTextByVariant: Record<SpeechVariantId, string>;
+  promptReadingByVariant?: Partial<Record<SpeechVariantId, string>>;
+  answerReadingByVariant?: Partial<Record<SpeechVariantId, string>>;
   slotEntryIds: string[];
 }
 
@@ -143,15 +147,26 @@ export interface QuizTierDefinition {
   passScore: number;
 }
 
+export interface QuizChoiceOption {
+  id: string;
+  text: string;
+  reading?: string;
+  language: string;
+}
+
 export interface QuizQuestion {
+  // Older first-party packs omit `kind`; shared UI treats that as `text`.
+  kind?: "text" | "choice";
   id: string;
   languageCode: LanguageCode;
   topicId: string;
   sourceId: string;
+  learningPriority?: VocabularyPriority;
   sceneId: string;
   tierId: QuizTierId;
   variantId: SpeechVariantId;
   prompt: string;
+  promptReading?: string;
   promptLanguage: string;
   canonicalAnswer: string;
   acceptedAnswers: string[];
@@ -160,6 +175,9 @@ export interface QuizQuestion {
   answerLabel: string;
   answerPlaceholder: string;
   helper: string;
+  explanation?: string;
+  options?: QuizChoiceOption[];
+  correctOptionId?: string;
 }
 
 export interface GradeResult {
@@ -237,9 +255,11 @@ export interface PackPresentation {
   keyboardHelp: string;
   startTopicId: string;
   weakVocabularyTitle: string;
+  speechVariantMode?: "selectable" | "primary-with-reference";
 }
 
 export interface LanguagePack {
+  contentVersion?: number;
   code: LanguageCode;
   name: string;
   nativeName: string;

@@ -9,4 +9,26 @@ describe("app update checks", () => {
     await expect(checkForAppUpdate(registration)).resolves.toBe(registration);
     expect(update).toHaveBeenCalledTimes(1);
   });
+
+  it("does not block startup when no service worker is registered", async () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, "serviceWorker");
+    const getRegistration = vi.fn(() => Promise.resolve(undefined));
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: {
+        getRegistration,
+        get ready() {
+          throw new Error("the update check must not wait for service-worker readiness");
+        }
+      }
+    });
+
+    try {
+      await expect(checkForAppUpdate()).resolves.toBeUndefined();
+      expect(getRegistration).toHaveBeenCalledTimes(1);
+    } finally {
+      if (original) Object.defineProperty(navigator, "serviceWorker", original);
+      else delete (navigator as unknown as { serviceWorker?: ServiceWorkerContainer }).serviceWorker;
+    }
+  });
 });

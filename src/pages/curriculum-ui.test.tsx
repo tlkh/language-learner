@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { AppStateProvider } from "../state/AppState";
@@ -43,17 +43,19 @@ describe("trip-based curriculum UI", () => {
     expect(screen.queryByRole("heading", { name: "Finding the gate" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Scene vocabulary" })).toBeInTheDocument();
     expect(screen.getByText("29 unique topic entries. The shared phrase kit is linked separately.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Quick study · 12" })).toHaveAttribute("href", "/ja/topic/airports-flights/study?scene=checkin-border&mode=focus");
+    expect(screen.getByRole("link", { name: "Quick study · 10" })).toHaveAttribute("href", "/ja/topic/airports-flights/study?scene=checkin-border&priority=must-know&mode=focus");
+    expect(screen.getByRole("link", { name: "Browse all 10" })).toHaveAttribute("href", "/ja/topic/airports-flights/study?scene=checkin-border&priority=must-know&mode=all");
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
     expect(screen.getByRole("link", { name: "Browse all 29" })).toHaveAttribute("href", "/ja/topic/airports-flights/study?scene=checkin-border&mode=all");
 
     const words = screen.getByRole("heading", { name: "Scene vocabulary" });
     const dialogue = screen.getByRole("heading", { name: "Dialogue in context" });
     const scenes = screen.getByRole("heading", { name: "What this scene prepares you to do" });
+    expect(scenes.compareDocumentPosition(words) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(words.compareDocumentPosition(dialogue) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(dialogue.compareDocumentPosition(scenes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.queryByRole("heading", { name: "4-step topic checkpoint" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "3-step topic checkpoint" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("link", { name: "Checkpoint" }));
-    expect(await screen.findByRole("heading", { name: "4-step topic checkpoint" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "3-step topic checkpoint" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Scene vocabulary" })).not.toBeInTheDocument();
   });
 
@@ -72,8 +74,25 @@ describe("trip-based curriculum UI", () => {
         <Routes><Route path="/ja/phrases/quiz" element={<QuizPage source="phrases" />} /></Routes>
       </MemoryRouter>
     );
-    expect(await screen.findByRole("heading", { level: 1, name: "Essential phrases · Japanese" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Essential phrases · Recall" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Japanese answer" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Leave quiz" })).toHaveAttribute("href", "/ja/phrases?tab=practice");
+  });
+
+  it("presents four keyboard-free choices for the first Japanese checkpoint", async () => {
+    renderWithState(
+      <MemoryRouter initialEntries={["/ja/topic/greetings-small-talk/quiz/recognition"]}>
+        <Routes><Route path="/ja/topic/:topicId/quiz/:tierId" element={<QuizPage />} /></Routes>
+      </MemoryRouter>
+    );
+    const choices = await screen.findByRole("group", { name: "Choose the meaning" });
+    expect(within(choices).getAllByRole("button")).toHaveLength(4);
+    const session = (await db.sessions.toArray())[0];
+    const question = session.questions[0];
+    const correctText = question.options?.find((option) => option.id === question.correctOptionId)?.text;
+    if (!correctText) throw new Error("Expected a correct recognition option");
+    fireEvent.click(within(choices).getByRole("button", { name: correctText }));
+    fireEvent.click(screen.getByRole("button", { name: /Check answer/ }));
+    expect(await screen.findByRole("heading", { name: "Correct" })).toBeInTheDocument();
   });
 });

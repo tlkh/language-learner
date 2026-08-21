@@ -2,6 +2,7 @@ import { languageCatalog, loadLanguagePack } from "../src/languages/registry";
 import type { LanguagePack, VocabularyEntry } from "../src/languages/types";
 
 const errors: string[] = [];
+const japaneseIdeograph = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/u;
 
 const unique = (values: string[], label: string) => {
   const seen = new Set<string>();
@@ -28,6 +29,11 @@ const validateForm = (pack: LanguagePack, entry: VocabularyEntry, label: string)
     if (!form) continue;
     for (const id of Object.keys(form.representations)) if (!representationIds.has(id)) errors.push(`${label}: unknown variant representation ${id}`);
     for (const id of Object.keys(form.aliases)) if (!representationIds.has(id)) errors.push(`${label}: variant aliases use unknown representation ${id}`);
+  }
+  if (pack.code === "ja" && japaneseIdeograph.test(entry.baseForm.representations.target ?? "")) {
+    const reading = entry.baseForm.representations.reading;
+    if (!reading) errors.push(`${label}: Japanese form with kanji is missing a kana reading`);
+    else if (japaneseIdeograph.test(reading)) errors.push(`${label}: Japanese reading still contains an ideograph: ${reading}`);
   }
 };
 
@@ -97,16 +103,26 @@ function validatePack(pack: LanguagePack) {
     }
     for (const dialogue of topic.dialogues) for (const turn of dialogue.turns) {
       for (const variant of pack.speechVariants) if (!turn.targetTextByVariant[variant.id]) errors.push(`${prefix} ${dialogue.id}: missing ${variant.id} text`);
+      if (pack.code === "ja" && japaneseIdeograph.test(turn.targetTextByVariant.formal)) {
+        const reading = turn.targetReadingByVariant?.formal;
+        if (!reading) errors.push(`${prefix} ${dialogue.id}: polite dialogue line is missing a kana reading`);
+        else if (japaneseIdeograph.test(reading)) errors.push(`${prefix} ${dialogue.id}: dialogue reading still contains an ideograph: ${reading}`);
+      }
     }
     for (const pattern of topic.sentencePatterns) {
       pattern.slotEntryIds.forEach((id) => { if (!entries.has(id)) errors.push(`${prefix} ${pattern.id}: missing slot ${id}`); });
+      if (pack.code === "ja" && pattern.slotEntryIds.length) errors.push(`${prefix} ${pattern.id}: Japanese sentence practice must use authored dialogue, not generated slots`);
       for (const variant of pack.speechVariants) if (!pattern.targetTextByVariant[variant.id]) errors.push(`${prefix} ${pattern.id}: missing ${variant.id} text`);
     }
     for (const pattern of topic.responsePatterns) {
       pattern.slotEntryIds.forEach((id) => { if (!entries.has(id)) errors.push(`${prefix} ${pattern.id}: missing slot ${id}`); });
+      if (pack.code === "ja" && pattern.slotEntryIds.length) errors.push(`${prefix} ${pattern.id}: Japanese response practice must use authored dialogue, not generated slots`);
       for (const variant of pack.speechVariants) if (!pattern.promptTargetTextByVariant[variant.id] || !pattern.answerTargetTextByVariant[variant.id]) errors.push(`${prefix} ${pattern.id}: missing ${variant.id} prompt or answer`);
     }
-    for (const tierId of topic.quizTierIds) for (const variant of pack.speechVariants) {
+    const assessedVariants = pack.presentation.speechVariantMode === "primary-with-reference"
+      ? pack.speechVariants.filter((variant) => variant.id === pack.defaultSpeechVariantId)
+      : pack.speechVariants;
+    for (const tierId of topic.quizTierIds) for (const variant of assessedVariants) {
       const tier = pack.quiz.tiers.find((item) => item.id === tierId);
       if (!tier) continue;
       const questions = pack.quiz.generate(topic, { languageCode: pack.code, topicId: topic.id, tierId, variantId: variant.id, seed: 42, count: tier.sessionSize });
@@ -117,8 +133,17 @@ function validatePack(pack: LanguagePack) {
         validLocale(question.answerLanguage, `${prefix} ${question.id} answer language`);
         if (question.languageCode !== pack.code || question.tierId !== tierId || question.variantId !== variant.id) errors.push(`${prefix} ${question.id}: incorrect pack metadata`);
         if (!pack.representations.some((representation) => representation.id === question.answerRepresentationId)) errors.push(`${prefix} ${question.id}: unknown answer representation ${question.answerRepresentationId}`);
-        if (!question.acceptedAnswers.includes(question.canonicalAnswer)) errors.push(`${prefix} ${question.id}: canonical answer is not accepted`);
         if (!question.acceptedAnswers.length) errors.push(`${prefix} ${question.id}: no accepted answers`);
+        if (question.kind === "choice") {
+          if (question.options?.length !== 4) errors.push(`${prefix} ${question.id}: choice question must have four options`);
+          if (!question.correctOptionId) errors.push(`${prefix} ${question.id}: choice question has no correct option`);
+          if (!question.acceptedAnswers.includes(question.correctOptionId ?? "")) errors.push(`${prefix} ${question.id}: correct option is not accepted`);
+          if (!question.options?.some((option) => option.id === question.correctOptionId && option.text === question.canonicalAnswer)) errors.push(`${prefix} ${question.id}: canonical answer does not match the correct option`);
+          if (new Set(question.options?.map((option) => option.id)).size !== question.options?.length) errors.push(`${prefix} ${question.id}: duplicate choice option id`);
+          if (new Set(question.options?.map((option) => option.text)).size !== question.options?.length) errors.push(`${prefix} ${question.id}: duplicate choice option text`);
+        } else if (!question.acceptedAnswers.includes(question.canonicalAnswer)) {
+          errors.push(`${prefix} ${question.id}: canonical answer is not accepted`);
+        }
       }
     }
   }
@@ -167,11 +192,37 @@ for (const entry of languageCatalog) {
     if (pack.topics.flatMap((topic) => topic.scenes).length !== 48) errors.push(`[ja] expected 48 scenes`);
     const uniqueVocabulary = new Set(pack.topics.flatMap((topic) => topic.vocabulary.map((item) => item.id)));
     if (uniqueVocabulary.size !== 1389) errors.push(`[ja] expected 1,389 vocabulary records, received ${uniqueVocabulary.size}`);
-    if (pack.quiz.tiers.length !== 4) errors.push(`[ja] expected 4 quiz tiers`);
+    if (pack.quiz.tiers.length !== 3) errors.push(`[ja] expected 3 quiz tiers`);
     for (const topic of pack.topics) {
       if (topic.scenes.length !== 3) errors.push(`[ja] ${topic.id}: expected 3 scenes`);
       if (topic.vocabulary.filter((entry) => entry.tags.includes("domain")).length < 80) errors.push(`[ja] ${topic.id}: expected at least 80 domain words`);
-      for (const tier of pack.quiz.tiers) if (tier.sessionSize !== 24) errors.push(`[ja] ${tier.id}: expected 24 questions`);
+      for (const tier of pack.quiz.tiers) {
+        if (tier.sessionSize !== 10) errors.push(`[ja] ${tier.id}: expected 10 questions`);
+        if (tier.passScore !== 8) errors.push(`[ja] ${tier.id}: expected a pass score of 8`);
+      }
+      const domainIds = new Set(topic.vocabulary.filter((entry) => entry.tags.includes("domain")).map((entry) => entry.masteryKey));
+      for (const tierId of ["recognition", "recall"] as const) {
+        const fullPool = pack.quiz.generate(topic, {
+          languageCode: "ja",
+          topicId: topic.id,
+          tierId,
+          variantId: "formal",
+          seed: 1,
+          count: Number.MAX_SAFE_INTEGER
+        });
+        const assessedIds = new Set(fullPool.map((question) => question.sourceId));
+        for (const id of domainIds) if (!assessedIds.has(id)) errors.push(`[ja] ${topic.id}/${tierId}: domain entry ${id} is not assessed`);
+      }
+      const authoredPoliteLines = new Set(topic.dialogues.flatMap((dialogue) => dialogue.turns.map((turn) => turn.targetTextByVariant.formal)));
+      const contextPool = pack.quiz.generate(topic, {
+        languageCode: "ja",
+        topicId: topic.id,
+        tierId: "in-context",
+        variantId: "formal",
+        seed: 1,
+        count: Number.MAX_SAFE_INTEGER
+      });
+      for (const question of contextPool) if (!authoredPoliteLines.has(question.canonicalAnswer)) errors.push(`[ja] ${topic.id}/in-context: generated answer is not an authored polite dialogue line`);
     }
     if (pack.characterCourse.items.length !== 214) errors.push(`[ja] expected 214 kana, received ${pack.characterCourse.items.length}`);
     for (const collection of pack.characterCourse.collections) {

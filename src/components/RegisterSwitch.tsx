@@ -2,7 +2,7 @@ import { useLanguagePack } from "../languages/LanguagePackContext";
 
 export function RegisterSwitch({ compact = false }: { compact?: boolean }) {
   const { pack, variantId, setVariantId } = useLanguagePack();
-  if (pack.speechVariants.length < 2) return null;
+  if (pack.speechVariants.length < 2 || pack.presentation.speechVariantMode === "primary-with-reference") return null;
   return (
     <fieldset className={`register-switch${compact ? " register-switch--compact" : ""}`}>
       <legend className="sr-only">Speech style</legend>

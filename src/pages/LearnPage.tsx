@@ -23,6 +23,7 @@ export function LearnPage() {
     dismissSafetyKit
   } = useLanguagePack();
   const base = `/${pack.code}`;
+  const streamlinedBeginnerPath = pack.presentation.speechVariantMode === "primary-with-reference";
   const pathCollections = pack.collections.filter((collection) => (collection.presentation ?? "path") === "path");
   const featuredTrack = pack.tracks.find((track) => track.presentation === "featured");
   const optionalTrack = pack.tracks.find((track) => track.presentation === "optional");
@@ -123,7 +124,7 @@ export function LearnPage() {
         </section>
       ) : null}
 
-      {!characterCalloutDismissed ? (
+      {!streamlinedBeginnerPath && !characterCalloutDismissed ? (
         <section className="character-callout" aria-labelledby="character-callout-title">
           <Languages aria-hidden="true" />
           <div>
@@ -143,14 +144,14 @@ export function LearnPage() {
         </section>
       ) : null}
 
-      {featuredTrack && !safetyKitDismissed ? (
-        <section className="safety-panel" aria-labelledby="safety-title">
+      {featuredTrack && (streamlinedBeginnerPath || !safetyKitDismissed) ? (
+        <section className={`safety-panel${streamlinedBeginnerPath ? " safety-panel--compact" : ""}`} aria-labelledby="safety-title">
           <div className="safety-panel__heading">
             <ShieldCheck aria-hidden="true" />
             <div><h2 id="safety-title">{featuredTrack.title}</h2><p>{featuredTrack.description}</p></div>
-            <button className="icon-button safety-panel__dismiss" type="button" onClick={dismissSafetyKit} aria-label={`Dismiss ${featuredTrack.title}`}>
+            {!streamlinedBeginnerPath ? <button className="icon-button safety-panel__dismiss" type="button" onClick={dismissSafetyKit} aria-label={`Dismiss ${featuredTrack.title}`}>
               <X aria-hidden="true" />
-            </button>
+            </button> : null}
           </div>
           <div className="safety-panel__links">
             {featuredTrack.topicIds.map((id) => {

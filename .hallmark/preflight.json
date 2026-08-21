@@ -1,5 +1,5 @@
 {
-  "date": "2026-08-15",
+  "date": "2026-08-21",
   "framework": "existing React + TypeScript + Vite PWA",
   "fontStack": "preserved bundled Bricolage Grotesque + Geist; native Japanese stack",
   "palette": "preserved OKLCH light/dark system with a neutral selector and language-scoped national accents",

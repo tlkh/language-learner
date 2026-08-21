@@ -179,13 +179,16 @@ describe("Japanese language pack", () => {
     expect(japanesePack.collections).toHaveLength(5);
     expect(japanesePack.topics.flatMap((topic) => topic.scenes)).toHaveLength(48);
     expect(new Set(japanesePack.topics.flatMap((topic) => topic.vocabulary.map((entry) => entry.id))).size).toBe(1389);
-    expect(japanesePack.quiz.tiers).toHaveLength(4);
+    expect(japanesePack.quiz.tiers.map((tier) => tier.id)).toEqual(["recognition", "recall", "in-context"]);
+    expect(japanesePack.quiz.tiers.every((tier) => tier.sessionSize === 10 && tier.passScore === 8)).toBe(true);
     expect(japanesePack.sharedVocabularySets[0].vocabulary).toHaveLength(40);
     for (const topic of japanesePack.topics) {
       expect(topic.vocabulary.filter((entry) => entry.tags.includes("domain")).length).toBeGreaterThanOrEqual(80);
       expect(topic.dialogues).toHaveLength(3);
       expect(topic.scenes).toHaveLength(3);
       expect(topic.quizTierIds).toEqual(japanesePack.quiz.tiers.map((tier) => tier.id));
+      expect(topic.sentencePatterns.every((pattern) => pattern.slotEntryIds.length === 0)).toBe(true);
+      expect(topic.responsePatterns.every((pattern) => pattern.slotEntryIds.length === 0)).toBe(true);
       for (const scene of topic.scenes) {
         expect(scene.dialogueIds).toHaveLength(1);
         expect(scene.sentencePatternIds.length).toBeGreaterThanOrEqual(2);
@@ -214,14 +217,38 @@ describe("Japanese language pack", () => {
     ]));
   });
 
-  it("generates deterministic, scene-balanced sessions for every tier and speech variant", () => {
-    for (const topic of japanesePack.topics) for (const tier of japanesePack.quiz.tiers) for (const variant of japanesePack.speechVariants) {
-      const options = { languageCode: "ja", topicId: topic.id, tierId: tier.id, variantId: variant.id, seed: 42, count: tier.sessionSize };
+  it("generates deterministic, scene-balanced polite sessions for every checkpoint", () => {
+    for (const topic of japanesePack.topics) for (const tier of japanesePack.quiz.tiers) {
+      const options = { languageCode: "ja", topicId: topic.id, tierId: tier.id, variantId: "formal", seed: 42, count: tier.sessionSize };
       const first = japanesePack.quiz.generate(topic, options);
       expect(first).toEqual(japanesePack.quiz.generate(topic, options));
-      expect(first).toHaveLength(24);
-      expect(new Set(first.map((item) => item.id)).size).toBe(24);
+      expect(first).toHaveLength(10);
+      expect(new Set(first.map((item) => item.id)).size).toBe(10);
       expect(topic.scenes.every((scene) => first.some((question) => question.sceneId === scene.id))).toBe(true);
+      expect(first.every((question) => question.variantId === "formal")).toBe(true);
+    }
+  });
+
+  it("assesses the complete topic vocabulary and uses authored dialogue in context", () => {
+    for (const topic of japanesePack.topics) {
+      const domainIds = new Set(topic.vocabulary.filter((entry) => entry.tags.includes("domain")).map((entry) => entry.id));
+      for (const tierId of ["recognition", "recall"] as const) {
+        const pool = japanesePack.quiz.generate(topic, { languageCode: "ja", topicId: topic.id, tierId, variantId: "formal", seed: 1, count: Number.MAX_SAFE_INTEGER });
+        expect(new Set(pool.map((question) => question.sourceId))).toEqual(domainIds);
+      }
+      const authoredLines = new Set(topic.dialogues.flatMap((dialogue) => dialogue.turns.map((turn) => turn.targetTextByVariant.formal)));
+      const context = japanesePack.quiz.generate(topic, { languageCode: "ja", topicId: topic.id, tierId: "in-context", variantId: "formal", seed: 1, count: Number.MAX_SAFE_INTEGER });
+      expect(context.every((question) => question.kind === "choice" && authoredLines.has(question.canonicalAnswer))).toBe(true);
+    }
+  });
+
+  it("provides kana readings for every authored polite dialogue line", () => {
+    const ideograph = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/u;
+    for (const turn of japanesePack.topics.flatMap((topic) => topic.dialogues.flatMap((dialogue) => dialogue.turns))) {
+      if (ideograph.test(turn.targetTextByVariant.formal)) {
+        expect(turn.targetReadingByVariant?.formal).toBeTruthy();
+        expect(turn.targetReadingByVariant?.formal).not.toMatch(ideograph);
+      }
     }
   });
 

@@ -49,7 +49,7 @@ describe("Progress page", () => {
       languageCode: "ja",
       topicId: "greetings-small-talk",
       sourceId: "source",
-      tierId: "romaji-recall",
+      tierId: "recall",
       variantId: "formal",
       questionId: "question",
       response: "answer",
@@ -64,6 +64,7 @@ describe("Progress page", () => {
     expect(screen.getByText("100%")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Recall breakdown" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Recent activity" })).toBeInTheDocument();
+    expect(screen.queryByText(/Casual/)).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Your learning record starts with one card" })).not.toBeInTheDocument();
   });
 

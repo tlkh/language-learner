@@ -13,7 +13,7 @@ npm run dev
 
 Run the checks with `npm test`, `npm run validate:content`, `npm run test:responsive`, and `npm run build`.
 
-See [Authoring language packs](docs/language-packs.md) for the pack contract, a complete minimal example, character-course structure, and validation checklist.
+See [Authoring language packs](docs/language-packs.md) for the pack contract, a complete minimal example, character-course structure, and validation checklist. The [Japanese content policy](docs/japanese-content-policy.md) records its beginner teaching model, reference framework, and release checks.
 
 ## GitHub Pages
 

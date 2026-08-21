@@ -18,6 +18,7 @@ const phraseGroup = (id: string, title: string, description: string, start: numb
 });
 
 export const japanesePack: LanguagePack = {
+  contentVersion: 2,
   code: "ja",
   name: "Japanese",
   nativeName: "日本語",
@@ -27,6 +28,7 @@ export const japanesePack: LanguagePack = {
   targetFontFamily: "var(--font-japanese)",
   representations: [
     { id: "target", label: "Japanese", languageTag: "ja", inputMode: "target-script" },
+    { id: "meaning", label: "English meaning", languageTag: "en", inputMode: "latin" },
     { id: "reading", label: "Kana", languageTag: "ja", inputMode: "target-script" },
     { id: "glyph", label: "Kana unit", languageTag: "ja", inputMode: "target-script" },
     { id: "romanization", label: "Romaji", languageTag: "en", inputMode: "latin" }
@@ -51,11 +53,12 @@ export const japanesePack: LanguagePack = {
   presentation: {
     tagline: "Practical Japanese for the moments that matter—ready when the signal disappears.",
     welcomeTitle: "Japanese, ready for the trip",
-    welcomeDescription: "For Japanese-answer quizzes, add the Japanese keyboard in your phone or computer settings. Romaji answers are accepted only in the first tier.",
+    welcomeDescription: "Start with polite Japanese and kana readings. Add the Japanese keyboard when you are ready for recall practice.",
     keyboardTitle: "Japanese keyboard",
     keyboardHelp: "On iPhone: Settings → General → Keyboard → Keyboards → Add New Keyboard → Japanese. Choose Kana or Romaji input.",
     startTopicId: "greetings-small-talk",
-    weakVocabularyTitle: "Worth another look"
+    weakVocabularyTitle: "Worth another look",
+    speechVariantMode: "primary-with-reference"
   },
   tracks: [
     {

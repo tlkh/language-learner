@@ -365,14 +365,14 @@ const seeds: TopicSeed[] = [
       ]),
       dialogue("bus-fare", "Paying the fare", "On a local bus", [
         ["traveler", "Can I use an IC card?", "ICカードは使えますか。", "ICカードは使える？"],
-        ["local", "Yes, tap it when you get off.", "はい、降りる時にタッチしてください。", "うん、降りる時にタッチして。"],
+        ["local", "Yes. Tap your IC card when you get off.", "はい、降りる時にICカードをタッチしてください。", "うん、降りる時にICカードをタッチして。"],
         ["traveler", "Where is the reader?", "読取機はどこですか。", "読取機はどこ？"],
         ["local", "It is beside the driver.", "運転手の横です。", "運転手の横だよ。"]
       ]),
       dialogue("bus-stop-request", "Requesting a stop", "Approaching your destination", [
         ["traveler", "Is the next stop City Hall?", "次は市役所ですか。", "次は市役所？"],
         ["local", "Yes, press the button now.", "はい、今ボタンを押してください。", "うん、今ボタンを押して。"],
-        ["traveler", "Thank you. Does this door open?", "ありがとうございます。このドアが開きますか。", "ありがとう。このドアが開く？"],
+        ["traveler", "Thank you. Should I get off through this door?", "ありがとうございます。このドアから降りればいいですか。", "ありがとう。このドアから降りればいい？"],
         ["local", "Please get off at the front.", "前のドアから降りてください。", "前のドアから降りて。"]
       ])
     ],

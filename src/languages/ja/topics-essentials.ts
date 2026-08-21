@@ -115,7 +115,7 @@ const seeds: TopicSeed[] = [
     ],
     dialogues: [
       dialogue("allergy-order", "Explaining an allergy", "Before ordering", [
-        ["traveler", "I have a severe peanut allergy.", "重いピーナッツアレルギーがあります。", "重いピーナッツアレルギーがある。"],
+        ["traveler", "I have a severe peanut allergy.", "重度のピーナッツアレルギーがあります。", "重度のピーナッツアレルギーがある。"],
         ["local", "Does cross-contact also cause a reaction?", "微量の混入でも反応しますか。", "少し混ざっても反応する？"],
         ["traveler", "Yes. Please use separate utensils.", "はい。別の調理器具を使ってください。", "うん。別の調理器具を使って。"],
         ["local", "I will confirm with the kitchen.", "厨房に確認いたします。", "厨房に確認するね。"]
